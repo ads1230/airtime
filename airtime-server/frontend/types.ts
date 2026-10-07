@@ -60,6 +60,13 @@ export interface TimeZoneInfo {
     available: string[];
 }
 
+export interface TimeServerInfo {
+    ready: boolean;
+    source_dir: string;
+    servers: string[];
+    current: { name: string; stratum: number; offset_ms: number } | null;
+}
+
 export type ReleaseChannel = 'stable' | 'beta';
 
 export interface UpdateInfo {

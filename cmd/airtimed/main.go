@@ -18,6 +18,7 @@ import (
 	"github.com/aleh11/airtime/internal/gpio"
 	"github.com/aleh11/airtime/internal/health"
 	"github.com/aleh11/airtime/internal/metrics"
+	"github.com/aleh11/airtime/internal/ntp"
 	"github.com/aleh11/airtime/internal/scheduler"
 	"github.com/aleh11/airtime/internal/store"
 	"github.com/aleh11/airtime/internal/timezone"
@@ -140,8 +141,18 @@ func run() error {
 			},
 		},
 		TimeZone: timezone.System{},
-		Version:  version,
-		Static:   web.Handler(),
+		TimeServers: ntp.Chrony{
+			Dir: filepath.Join(cfg.stateDir, "chrony"),
+			Restart: func() error {
+				// Debian names the unit chrony; other distributions call it chronyd.
+				if err := exec.Command("systemctl", "restart", "chrony").Run(); err != nil {
+					return exec.Command("systemctl", "restart", "chronyd").Run()
+				}
+				return nil
+			},
+		},
+		Version: version,
+		Static:  web.Handler(),
 		RestartService: func() error {
 			return exec.Command("systemctl", "restart", cfg.serviceName).Start()
 		},

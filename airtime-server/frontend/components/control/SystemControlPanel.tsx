@@ -1,4 +1,4 @@
-import { Clock, Globe, RefreshCw, RotateCw, Settings, Zap } from 'lucide-react';
+import { Clock, Globe, RefreshCw, RotateCw, Server, Settings, Zap } from 'lucide-react';
 import { TimeModeBadge } from './TimeModeBadge';
 import { TimeMode } from '../../hooks/useBroadcastSettings';
 import { Button } from '../ui/button';
@@ -14,9 +14,11 @@ interface SystemControlPanelProps {
     offsetMinutes: number;
     offsetSign: number;
     timeZone: string | null;
+    timeServer: string | null;
     onToggleLeds: () => void;
     onOpenTimeSettings: () => void;
     onOpenTimeZone: () => void;
+    onOpenTimeServer: () => void;
     onRestartService: () => void;
     onRestartPi: () => void;
     onCheckUpdates: () => void;
@@ -34,9 +36,11 @@ export function SystemControlPanel({
     offsetMinutes,
     offsetSign,
     timeZone,
+    timeServer,
     onToggleLeds,
     onOpenTimeSettings,
     onOpenTimeZone,
+    onOpenTimeServer,
     onRestartService,
     onRestartPi,
     onCheckUpdates,
@@ -96,6 +100,24 @@ export function SystemControlPanel({
                         <div className="flex min-w-0 items-center gap-2 text-sm font-medium text-foreground">
                             <span className="shrink-0">Time Zone</span>
                             <span className="truncate font-mono text-[10px] text-subtle-foreground">{timeZone}</span>
+                        </div>
+                    </div>
+                    <Settings size={13} className="shrink-0 text-subtle-foreground" />
+                </button>
+            )}
+
+            {timeServer !== null && (
+                <button
+                    onClick={onOpenTimeServer}
+                    className={`${ROW_CLASS} w-full cursor-pointer text-left transition-colors hover:bg-muted`}
+                >
+                    <div className="flex min-w-0 items-center gap-2.5">
+                        <div className="rounded-full bg-secondary p-1.5 text-on-air-bright">
+                            <Server size={14} />
+                        </div>
+                        <div className="flex min-w-0 items-center gap-2 text-sm font-medium text-foreground">
+                            <span className="shrink-0">Time Server</span>
+                            <span className="truncate font-mono text-[10px] text-subtle-foreground">{timeServer}</span>
                         </div>
                     </div>
                     <Settings size={13} className="shrink-0 text-subtle-foreground" />

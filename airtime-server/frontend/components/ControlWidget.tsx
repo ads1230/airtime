@@ -9,6 +9,8 @@ import { SystemControlPanel } from './control/SystemControlPanel';
 import { TimeSettingsModal } from './control/TimeSettingsModal';
 import { TimeTesterModal } from './control/TimeTesterModal';
 import { TimeZoneModal } from './control/TimeZoneModal';
+import { TimeServerModal, describeTimeServers } from './control/TimeServerModal';
+import { useTimeServers } from '../hooks/useTimeServers';
 import { useBroadcastSettings } from '../hooks/useBroadcastSettings';
 import { useTimeTester } from '../hooks/useTimeTester';
 import { useSystemActions } from '../hooks/useSystemActions';
@@ -55,6 +57,8 @@ export function ControlWidget({
     const [showTimeTester, setShowTimeTester] = useState(false);
     const [timeZone, setTimeZone] = useState<TimeZoneInfo | null>(null);
     const [showTimeZone, setShowTimeZone] = useState(false);
+    const timeServers = useTimeServers();
+    const [showTimeServer, setShowTimeServer] = useState(false);
     const [prompt, setPrompt] = useState<Prompt | null>(null);
     const standards = radioConfig?.available_services ?? FALLBACK_STANDARDS;
 
@@ -149,6 +153,7 @@ export function ControlWidget({
                         offsetMinutes={settings.offsetMinutes}
                         offsetSign={settings.offsetSign}
                         timeZone={timeZone?.timezone ?? null}
+                        timeServer={timeServers.info ? describeTimeServers(timeServers.info.servers) : null}
                         onToggleLeds={toggleLeds}
                         onOpenTimeSettings={() => {
                             if (isTransmitting) {
@@ -171,6 +176,18 @@ export function ControlWidget({
                                 return;
                             }
                             setShowTimeZone(true);
+                        }}
+                        onOpenTimeServer={() => {
+                            if (isTransmitting) {
+                                setPrompt({
+                                    title: 'Control Locked',
+                                    message: "You can't change the time server while broadcasting.",
+                                    type: 'warning',
+                                });
+                                return;
+                            }
+                            timeServers.reload();
+                            setShowTimeServer(true);
                         }}
                         onRestartService={() => confirmRestart('service')}
                         onRestartPi={() => confirmRestart('pi')}
@@ -208,6 +225,15 @@ export function ControlWidget({
                     zones={timeZone.available}
                     onSave={applyTimeZone}
                     onClose={() => setShowTimeZone(false)}
+                />
+            )}
+
+            {showTimeServer && timeServers.info && (
+                <TimeServerModal
+                    info={timeServers.info}
+                    syncing={timeServers.syncing}
+                    onApply={timeServers.apply}
+                    onClose={() => setShowTimeServer(false)}
                 />
             )}
 

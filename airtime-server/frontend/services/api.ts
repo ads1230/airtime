@@ -8,6 +8,7 @@ import {
     UiConfig,
     UiConfigInput,
     TransmitRequest,
+    TimeServerInfo,
     TimeZoneInfo,
     UpdateInfo, ReleaseChannel } from '../types';
 
@@ -160,6 +161,21 @@ export const api = {
             body: JSON.stringify({ timezone }),
         });
         return handleResponse<{ timezone: string; restarting: boolean }>(res);
+    },
+
+    getTimeServers: async (): Promise<TimeServerInfo> => {
+        const res = await fetch(`${API_BASE}/api/settings/ntp`);
+        return handleResponse<TimeServerInfo>(res);
+    },
+
+    // The daemon restarts chrony, so the Pi briefly reports no time source.
+    setTimeServers: async (servers: string[]): Promise<{ servers: string[] }> => {
+        const res = await fetch(`${API_BASE}/api/settings/ntp`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ servers }),
+        });
+        return handleResponse<{ servers: string[] }>(res);
     },
 
     getTimeTester: async (): Promise<{ enabled: boolean; service: string }> => {

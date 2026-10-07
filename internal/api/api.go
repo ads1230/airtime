@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aleh11/airtime/internal/metrics"
+	"github.com/aleh11/airtime/internal/ntp"
 	"github.com/aleh11/airtime/internal/store"
 	"github.com/aleh11/airtime/internal/transmit"
 	"github.com/aleh11/airtime/internal/update"
@@ -30,6 +31,15 @@ type Updater interface {
 	Apply() error
 }
 
+// TimeServers chooses the NTP servers chrony uses. A nil TimeServers disables the endpoints.
+type TimeServers interface {
+	Ready() bool
+	SourceDir() string
+	Servers() ([]string, error)
+	SetServers(servers []string) error
+	Current() (*ntp.Source, error)
+}
+
 // TimeZone reads and changes the Pi's time zone. A nil TimeZone disables the endpoints.
 type TimeZone interface {
 	Current() (string, error)
@@ -38,14 +48,15 @@ type TimeZone interface {
 }
 
 type Deps struct {
-	Store    *store.Store
-	Runner   Broadcaster
-	Metrics  MetricsSource
-	Updater  Updater
-	TimeZone TimeZone
-	Version  string
-	Now      func() time.Time
-	Static   http.Handler
+	Store       *store.Store
+	Runner      Broadcaster
+	Metrics     MetricsSource
+	Updater     Updater
+	TimeZone    TimeZone
+	TimeServers TimeServers
+	Version     string
+	Now         func() time.Time
+	Static      http.Handler
 
 	// RestartService and RebootHost are injected so tests never reboot anything.
 	RestartService func() error
@@ -75,6 +86,8 @@ func New(deps Deps) http.Handler {
 	mux.HandleFunc("POST /api/settings/ui", s.setUIConfig)
 	mux.HandleFunc("GET /api/settings/timezone", s.getTimeZone)
 	mux.HandleFunc("POST /api/settings/timezone", s.setTimeZone)
+	mux.HandleFunc("GET /api/settings/ntp", s.getTimeServers)
+	mux.HandleFunc("POST /api/settings/ntp", s.setTimeServers)
 	mux.HandleFunc("POST /api/control/stealth", s.toggleStealth)
 	mux.HandleFunc("POST /api/control/transmit", s.startTransmit)
 	mux.HandleFunc("POST /api/control/stop", s.stopTransmit)

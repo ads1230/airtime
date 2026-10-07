@@ -268,6 +268,23 @@ retire_python_install() {
   fi
 }
 
+# The dashboard picks time servers by writing a sources file in the state
+# directory, so chrony is pointed at it once here. The daemon cannot do this
+# itself: ProtectSystem=strict keeps /etc read-only to it.
+configure_chrony() {
+  local conf=/etc/chrony/chrony.conf
+  local line="sourcedir ${state_dir}/chrony"
+  install -d -m 0755 -o root -g root "${state_dir}/chrony"
+  [[ -f "${conf}" ]] || return 0
+
+  if grep -qE '^[[:space:]]*confdir[[:space:]].*/etc/chrony/conf\.d' "${conf}"; then
+    install -d -m 0755 /etc/chrony/conf.d
+    printf '# AirTime: time servers chosen in the dashboard\n%s\n' "${line}" > /etc/chrony/conf.d/airtime.conf
+  elif ! grep -qxF "${line}" "${conf}"; then
+    printf '\n# AirTime: time servers chosen in the dashboard\n%s\n' "${line}" >> "${conf}"
+  fi
+}
+
 install_binary() {
   local asset="$1"
   install -m 0755 -o root -g root "${download_dir}/${asset}" "${install_path}"
@@ -471,6 +488,7 @@ main() {
   with_status "Installing AirTime" install_binary "${asset}" \
     || fail "could not install the binary"
   provision_state
+  configure_chrony
   complete_step "AirTime installed to ${install_path}"
 
   with_status "Writing service units" install_units \
