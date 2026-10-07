@@ -24,6 +24,19 @@ export function piWallClock(instantMs: number, utcOffsetMinutes: number): Date {
     return new Date(instantMs + utcOffsetMinutes * 60_000);
 }
 
+// How far a fixed-time broadcast runs from the Pi's clock: txtempus starts the given
+// HH:MM at the minute the broadcast began, on that day, and counts on from there.
+export function fixedTimeShiftMs(startedAt: string, fixedTime: string): number | null {
+    const started = parsePiClock(startedAt);
+    const match = /^(\d{1,2}):(\d{2})$/.exec(fixedTime);
+    if (!started || !match) return null;
+
+    const wall = piWallClock(started.instantMs, started.utcOffsetMinutes);
+    const startMinute = Math.floor(wall.getTime() / 60_000) * 60_000;
+    const chosen = Date.UTC(wall.getUTCFullYear(), wall.getUTCMonth(), wall.getUTCDate(), Number(match[1]), Number(match[2]));
+    return chosen - startMinute;
+}
+
 // Minutes east of UTC for an IANA zone at an instant, or null if this browser doesn't know the zone.
 export function zoneUtcOffset(zone: string, at: Date = new Date()): number | null {
     try {

@@ -151,7 +151,6 @@ It stays on ${status?.version ?? 'the current build'} until a stable release is 
           <div className="order-1 lg:col-span-7">
             <ClockWidget
               status={status}
-              radioConfig={radioConfig}
               timeTesterEnabled={timeTesterEnabled}
             />
           </div>

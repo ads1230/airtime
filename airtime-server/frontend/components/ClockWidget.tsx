@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Card } from './Card';
 import { Badge } from './ui/badge';
-import { SystemStatus, RadioConfig } from '../types';
+import { SystemStatus } from '../types';
 import { RadioTower } from 'lucide-react';
-import { formatUtcOffset, parsePiClock, piWallClock } from './piClock';
+import { fixedTimeShiftMs, formatUtcOffset, parsePiClock, piWallClock } from './piClock';
 
 const formatTimeAgo = (seconds: number): string => {
     if (seconds < 0) return '--';
@@ -15,11 +15,10 @@ const formatTimeAgo = (seconds: number): string => {
 
 interface ClockWidgetProps {
     status: SystemStatus | null;
-    radioConfig?: RadioConfig | null;
     timeTesterEnabled?: boolean;
 }
 
-export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, timeTesterEnabled = false }) => {
+export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, timeTesterEnabled = false }) => {
     const [displayTime, setDisplayTime] = useState<Date>(new Date());
     const [serverOffset, setServerOffset] = useState<number>(0);
     const [piUtcOffset, setPiUtcOffset] = useState<number | null>(null);
@@ -77,19 +76,25 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
     const isTransmitting = status?.services.txtempus_running;
     const serviceName = status?.services.txtempus_service || 'Unknown';
 
-    // Derive time mode from settings (radioConfig), not from runtime status parsing
-    const timeMode = radioConfig?.default_time_mode || 'time_now';
-    const fixedTime = timeMode === 'fixed_time' ? (radioConfig?.default_fixed_time || null) : null;
-    const isFixedTimeBroadcast = !!isTransmitting && timeMode === 'fixed_time' && !timeTesterEnabled;
+    // What is on air, as the daemon recorded it at the start; the settings may say otherwise.
+    // txtempus gets a fixed time or an offset, never both, and a fixed time wins.
+    const services = status?.services;
+    const fixedTime = isTransmitting ? (services?.txtempus_fixed_time || null) : null;
+    const isFixedTimeBroadcast = !!fixedTime && !timeTesterEnabled;
 
-    const rawOffset = (timeMode === 'time_now_with_offset' && radioConfig?.default_offset_enabled)
-        ? (radioConfig?.default_offset || 0)
-        : 0;
-    const offset = rawOffset;
+    const offset = isTransmitting && !fixedTime ? (services?.txtempus_offset || 0) : 0;
     const offsetHours = Math.floor(Math.abs(offset) / 60);
     const offsetMinutes = Math.abs(offset) % 60;
     const offsetSign = offset >= 0 ? 1 : -1;
     const hasOffset = offset !== 0;
+
+    // The time a watch is being sent, when that isn't simply the Pi's clock.
+    const broadcastShiftMs = fixedTime
+        ? fixedTimeShiftMs(services?.txtempus_started_at || '', fixedTime)
+        : (hasOffset ? offset * 60_000 : null);
+    const broadcastTime = piTime && broadcastShiftMs !== null ? new Date(piTime.getTime() + broadcastShiftMs) : null;
+    const broadcastOnOtherDay = !!broadcastTime && !!piTime && broadcastTime.getUTCDate() !== piTime.getUTCDate();
+    const broadcastTone = fixedTime ? 'text-testing-bright' : (offsetSign > 0 ? 'text-offset-positive' : 'text-offset-negative');
 
     // A Time Tester run or a fixed-time Broadcast reads as "testing"; everything
     // else is a normal on-air Broadcast.
@@ -189,6 +194,15 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
                                         </Badge>
                                     )}
                                 </div>
+                                {broadcastTime && (
+                                    <div className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 text-[11px] font-medium text-muted-foreground">
+                                        Broadcasting
+                                        <span className={`font-mono text-sm font-bold ${broadcastTone}`}>{formatTime(broadcastTime)}</span>
+                                        {broadcastOnOtherDay && (
+                                            <span>{broadcastTime.toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
 

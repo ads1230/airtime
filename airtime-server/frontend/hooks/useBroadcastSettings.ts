@@ -40,6 +40,9 @@ export function useBroadcastSettings(radioConfig: RadioConfig | null, onSaved?: 
                 default_duration_minutes: nextDuration,
                 default_offset: radioConfig?.default_offset || 0,
                 default_offset_enabled: offsetEnabled,
+                // Left out, the daemon resets these to Time Now while an enabled offset stays applied.
+                default_time_mode: radioConfig?.default_time_mode,
+                default_fixed_time: radioConfig?.default_fixed_time,
             });
         } catch (e) {
             console.error('Failed to save broadcast defaults', e);
