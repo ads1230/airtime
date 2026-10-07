@@ -21,8 +21,8 @@ func TestUIConfigReturnsDefaultsBeforeAnythingIsSaved(t *testing.T) {
 		t.Fatalf("got %v, want no stored layout", got["layout"])
 	}
 	themes, ok := got["available_themes"].([]any)
-	if !ok || len(themes) == 0 {
-		t.Fatalf("got %v, want the theme list", got["available_themes"])
+	if !ok || len(themes) != 2 {
+		t.Fatalf("got %v, want AirTime Dark and Light", got["available_themes"])
 	}
 }
 
@@ -30,13 +30,13 @@ func TestUIConfigRoundTrips(t *testing.T) {
 	h, _, _ := newServer(t)
 
 	rec := do(t, h, http.MethodPost, "/api/settings/ui",
-		`{"theme":"nord","layout":"{\"v\":1}","hidden_widgets":["performance"]}`)
+		`{"theme":"airtime-light","layout":"{\"v\":1}","hidden_widgets":["performance"]}`)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status %d: %s", rec.Code, rec.Body)
 	}
 
 	got := decode(t, do(t, h, http.MethodGet, "/api/settings/ui", ""))
-	if got["theme"] != "nord" {
+	if got["theme"] != "airtime-light" {
 		t.Fatalf("theme: got %v", got["theme"])
 	}
 	if got["layout"] != `{"v":1}` {
@@ -51,7 +51,7 @@ func TestUIConfigRoundTrips(t *testing.T) {
 func TestUIConfigRejectsUnknownThemeAndKeepsTheStoredOne(t *testing.T) {
 	h, _, _ := newServer(t)
 
-	if rec := do(t, h, http.MethodPost, "/api/settings/ui", `{"theme":"nord"}`); rec.Code != http.StatusOK {
+	if rec := do(t, h, http.MethodPost, "/api/settings/ui", `{"theme":"airtime-light"}`); rec.Code != http.StatusOK {
 		t.Fatalf("seed status %d: %s", rec.Code, rec.Body)
 	}
 
@@ -61,7 +61,7 @@ func TestUIConfigRejectsUnknownThemeAndKeepsTheStoredOne(t *testing.T) {
 	}
 
 	got := decode(t, do(t, h, http.MethodGet, "/api/settings/ui", ""))
-	if got["theme"] != "nord" {
+	if got["theme"] != "airtime-light" {
 		t.Fatalf("theme changed despite the rejection: got %v", got["theme"])
 	}
 }
@@ -69,7 +69,7 @@ func TestUIConfigRejectsUnknownThemeAndKeepsTheStoredOne(t *testing.T) {
 func TestUIConfigRejectsALayoutThatIsNotJSON(t *testing.T) {
 	h, _, _ := newServer(t)
 
-	rec := do(t, h, http.MethodPost, "/api/settings/ui", `{"theme":"nord","layout":"not json"}`)
+	rec := do(t, h, http.MethodPost, "/api/settings/ui", `{"theme":"airtime-light","layout":"not json"}`)
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("got %d, want 400", rec.Code)
 	}
@@ -83,8 +83,20 @@ func TestUIConfigRejectsAnOversizedLayout(t *testing.T) {
 		huge[i] = 'a'
 	}
 	rec := do(t, h, http.MethodPost, "/api/settings/ui",
-		`{"theme":"nord","layout":"`+string(huge)+`"}`)
+		`{"theme":"airtime-light","layout":"`+string(huge)+`"}`)
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("got %d, want 400", rec.Code)
+	}
+}
+
+func TestUIConfigFallsBackFromARetiredTheme(t *testing.T) {
+	h, s, _ := newServer(t)
+	if err := s.SetSetting("ui_config", "theme", "nord"); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+
+	got := decode(t, do(t, h, http.MethodGet, "/api/settings/ui", ""))
+	if got["theme"] != "airtime-dark" {
+		t.Fatalf("got %v, want airtime-dark", got["theme"])
 	}
 }

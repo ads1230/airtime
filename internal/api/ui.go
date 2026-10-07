@@ -11,13 +11,6 @@ import (
 var Themes = []string{
 	"airtime-dark",
 	"airtime-light",
-	"tokyo-night",
-	"dracula",
-	"nord",
-	"gruvbox-dark",
-	"one-dark",
-	"catppuccin-mocha",
-	"solarized-light",
 }
 
 const (

@@ -2,13 +2,6 @@
 export const THEME_LABELS: Record<string, string> = {
     'airtime-dark': 'AirTime Dark',
     'airtime-light': 'AirTime Light',
-    'tokyo-night': 'Tokyo Night',
-    dracula: 'Dracula',
-    nord: 'Nord',
-    'gruvbox-dark': 'Gruvbox Dark',
-    'one-dark': 'One Dark',
-    'catppuccin-mocha': 'Catppuccin Mocha',
-    'solarized-light': 'Solarized Light',
 };
 
 export const DEFAULT_THEME = 'airtime-dark';
@@ -34,7 +27,9 @@ export function cacheTheme(id: string): void {
 
 export function applyCachedTheme(): void {
     try {
-        applyTheme(localStorage.getItem(CACHE_KEY) ?? DEFAULT_THEME);
+        // A browser can still have one of the retired themes cached.
+        const cached = localStorage.getItem(CACHE_KEY);
+        applyTheme(cached && cached in THEME_LABELS ? cached : DEFAULT_THEME);
     } catch {
         applyTheme(DEFAULT_THEME);
     }
