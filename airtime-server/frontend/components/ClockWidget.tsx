@@ -68,20 +68,43 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
     const offsetSign = offset >= 0 ? 1 : -1;
     const hasOffset = offset !== 0;
 
-    // The time a watch is being sent, when that isn't simply the Pi's clock.
-    const broadcastShiftMs = fixedTime
-        ? fixedTimeShiftMs(services?.txtempus_started_at || '', fixedTime)
-        : (hasOffset ? offset * 60_000 : null);
-    const broadcastTime = piTime && broadcastShiftMs !== null ? new Date(piTime.getTime() + broadcastShiftMs) : null;
-    const broadcastOnOtherDay = !!broadcastTime && !!piTime && broadcastTime.getUTCDate() !== piTime.getUTCDate();
-    const broadcastTone = fixedTime ? 'text-testing-bright' : (offsetSign > 0 ? 'text-offset-positive' : 'text-offset-negative');
-
-    // Between broadcasts, the offset the next one will carry, decided the way the daemon builds its command.
-    const fixedConfigured = radioConfig?.default_time_mode === 'fixed_time' && !!radioConfig.default_fixed_time;
+    // Between broadcasts, what the next one will carry, decided the way the daemon builds its command.
+    const fixedConfigured = /^\d{1,2}:\d{2}$/.test(radioConfig?.default_fixed_time || '') && radioConfig?.default_time_mode === 'fixed_time'
+        ? radioConfig.default_fixed_time!
+        : null;
     const offsetConfigured = !fixedConfigured && (radioConfig?.default_time_mode === 'time_now_with_offset' || !!radioConfig?.default_offset_enabled)
         ? (radioConfig?.default_offset || 0)
         : 0;
-    const offsetTime = !isTransmitting && piTime && offsetConfigured !== 0 ? new Date(piTime.getTime() + offsetConfigured * 60_000) : null;
+
+    // The big clock shows the time a watch gets: on air, what the daemon recorded at
+    // the start; otherwise what the settings would send. A fixed time that hasn't
+    // started yet is shown standing still at the time it will start from.
+    let broadcastTime: Date | null = null;
+    let broadcastLabel = '';
+    let broadcastDetail = '';
+    let broadcastTone = 'text-testing-bright';
+    if (piTime && isTransmitting && fixedTime) {
+        const shift = fixedTimeShiftMs(services?.txtempus_started_at || '', fixedTime);
+        if (shift !== null) {
+            broadcastTime = new Date(piTime.getTime() + shift);
+            broadcastLabel = 'Broadcast time';
+            broadcastDetail = `fixed ${fixedTime}`;
+        }
+    } else if (piTime && !isTransmitting && fixedConfigured) {
+        const [hour, minute] = fixedConfigured.split(':').map(Number);
+        broadcastTime = new Date(Date.UTC(piTime.getUTCFullYear(), piTime.getUTCMonth(), piTime.getUTCDate(), hour, minute));
+        broadcastLabel = 'Broadcast starts at';
+    } else {
+        const shiftMinutes = isTransmitting ? offset : offsetConfigured;
+        if (piTime && shiftMinutes !== 0) {
+            broadcastTime = new Date(piTime.getTime() + shiftMinutes * 60_000);
+            broadcastLabel = 'Broadcast time';
+            broadcastDetail = formatOffset(shiftMinutes);
+            broadcastTone = shiftMinutes > 0 ? 'text-offset-positive' : 'text-offset-negative';
+        }
+    }
+    const shownTime = broadcastTime ?? piTime;
+    const showCurrentTime = !!broadcastTime && !!piTime && formatWallTime(broadcastTime) !== formatWallTime(piTime);
 
     // A Time Tester run or a fixed-time Broadcast reads as "testing"; everything
     // else is a normal on-air Broadcast.
@@ -111,23 +134,27 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
             <div className="flex h-full flex-col justify-between">
             <div className="z-10 mb-3 flex items-start justify-between">
                 <div>
+                    {broadcastLabel && (
+                        <div className={`mb-1 text-[11px] font-bold tracking-wider ${broadcastTone}`}>
+                            <span className="uppercase">{broadcastLabel}</span>
+                            {broadcastDetail && <span className="ml-1.5 font-mono">{broadcastDetail}</span>}
+                        </div>
+                    )}
                     <div className="mb-1 font-mono text-4xl leading-none font-bold tracking-tight text-heading md:text-5xl">
-                        {piTime ? formatWallTime(piTime) : '--:--:--'}
+                        {shownTime ? formatWallTime(shownTime) : '--:--:--'}
                     </div>
                     <div className="min-h-4 text-xs font-medium text-muted-foreground">
-                        {piTime && piUtcOffset !== null && `${formatDate(piTime)} · ${formatUtcOffset(piUtcOffset)}`}
+                        {shownTime && piUtcOffset !== null && `${formatDate(shownTime)} · ${formatUtcOffset(piUtcOffset)}`}
                     </div>
+                    {showCurrentTime && piTime && (
+                        <div className="mt-1.5 flex items-baseline gap-1.5 text-[11px] font-medium text-muted-foreground">
+                            Current time
+                            <span className="font-mono text-sm font-bold text-foreground">{formatWallTime(piTime)}</span>
+                        </div>
+                    )}
                     {zoneDiffers && (
                         <div className="mt-0.5 text-[11px] font-medium text-warning">
                             Time zone differs from this device ({formatUtcOffset(deviceUtcOffset)})
-                        </div>
-                    )}
-                    {offsetTime && (
-                        <div className="mt-1.5 flex items-baseline gap-1.5 text-[11px] font-medium text-muted-foreground">
-                            With offset {formatOffset(offsetConfigured)}
-                            <span className={`font-mono text-sm font-bold ${offsetConfigured > 0 ? 'text-offset-positive' : 'text-offset-negative'}`}>
-                                {formatWallTime(offsetTime)}
-                            </span>
                         </div>
                     )}
                 </div>
@@ -189,15 +216,6 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
                                         </Badge>
                                     )}
                                 </div>
-                                {broadcastTime && (
-                                    <div className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 text-[11px] font-medium text-muted-foreground">
-                                        Broadcasting
-                                        <span className={`font-mono text-sm font-bold ${broadcastTone}`}>{formatWallTime(broadcastTime)}</span>
-                                        {broadcastOnOtherDay && (
-                                            <span>{broadcastTime.toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' })}</span>
-                                        )}
-                                    </div>
-                                )}
                             </div>
                         </div>
 
