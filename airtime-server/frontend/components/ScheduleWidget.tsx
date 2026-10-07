@@ -9,6 +9,7 @@ import { ScheduleTable } from './schedule/ScheduleTable';
 import { ScheduleCards } from './schedule/ScheduleCards';
 import { useScheduleSorting } from '../hooks/useScheduleSorting';
 import { useScheduleEditor } from '../hooks/useScheduleEditor';
+import { availableStandards } from '../hooks/useBroadcastControl';
 
 interface ScheduleWidgetProps {
     jobs: CronJob[];
@@ -26,7 +27,7 @@ interface Prompt {
     onConfirm?: () => void;
 }
 
-export function ScheduleWidget({ jobs, onUpdate, status, timeTesterEnabled = false }: ScheduleWidgetProps) {
+export function ScheduleWidget({ jobs, onUpdate, radioConfig, status, timeTesterEnabled = false }: ScheduleWidgetProps) {
     const [prompt, setPrompt] = useState<Prompt | null>(null);
     const sorting = useScheduleSorting(jobs);
     const editor = useScheduleEditor(onUpdate, (message) =>
@@ -51,6 +52,8 @@ export function ScheduleWidget({ jobs, onUpdate, status, timeTesterEnabled = fal
 
     const shared = {
         jobs: sorting.sorted,
+        // The services this Pi's transmitter offers, as the broadcast picker uses.
+        standards: availableStandards(radioConfig),
         status,
         locked: timeTesterEnabled,
         draft: editor.draft,

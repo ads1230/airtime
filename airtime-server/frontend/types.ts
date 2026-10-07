@@ -135,14 +135,6 @@ export interface RadioConfigInput {
     default_fixed_time?: string;
 }
 
-export enum ServiceType {
-    DCF77 = "DCF77",
-    WWVB = "WWVB",
-    MSF = "MSF",
-    JJY40 = "JJY40",
-    JJY60 = "JJY60"
-}
-
 export interface UiConfig {
     theme: string;
     layout: string;

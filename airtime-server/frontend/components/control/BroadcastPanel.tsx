@@ -3,16 +3,7 @@ import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { ServiceName } from '../serviceNames';
-
-export const DURATION_OPTIONS = [
-    { label: '10 min', value: 10 },
-    { label: '20 min', value: 20 },
-    { label: '30 min', value: 30 },
-    { label: '1 hr', value: 60 },
-    { label: '2 hr', value: 120 },
-    { label: '4 hr', value: 240 },
-    { label: '6 hr', value: 360 },
-];
+import { DURATION_OPTIONS, durationLabel } from '../durations';
 
 interface BroadcastPanelProps {
     standards: string[];
@@ -45,6 +36,11 @@ export function BroadcastPanel({
 }: BroadcastPanelProps) {
     const shownStandard = isTransmitting ? (activeStandard || standard) : standard;
     const shownDuration = isTransmitting ? (activeDuration || duration) : duration;
+    // A length the list doesn't offer, such as a Time Tester run, is added so the
+    // locked picker still says how long the broadcast is.
+    const durationOptions = DURATION_OPTIONS.some((option) => option.value === shownDuration)
+        ? DURATION_OPTIONS
+        : [...DURATION_OPTIONS, { label: durationLabel(shownDuration), value: shownDuration }];
 
     return (
         <div className="grid grid-cols-[3fr_2fr] items-end gap-2 sm:flex">
@@ -77,7 +73,7 @@ export function BroadcastPanel({
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        {DURATION_OPTIONS.map((option) => (
+                        {durationOptions.map((option) => (
                             <SelectItem key={option.value} value={String(option.value)}>{option.label}</SelectItem>
                         ))}
                     </SelectContent>

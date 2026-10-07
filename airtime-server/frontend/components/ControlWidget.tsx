@@ -151,6 +151,17 @@ export function ControlWidget({
                         onRestartService={() => confirmRestart('service')}
                         onRestartPi={() => confirmRestart('pi')}
                         onCheckUpdates={onCheckUpdates}
+                        onOpenTimeTester={() => {
+                            if (isTransmitting) {
+                                setPrompt({
+                                    title: 'Control Locked',
+                                    message: "You can't start the Time Tester while broadcasting.",
+                                    type: 'warning',
+                                });
+                                return;
+                            }
+                            setShowTimeTester(true);
+                        }}
                     />
                 </div>
             </Card>

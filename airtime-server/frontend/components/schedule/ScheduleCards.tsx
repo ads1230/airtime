@@ -1,7 +1,8 @@
 import type { RefObject } from 'react';
 import { Clock, Edit2, Trash2, Zap } from 'lucide-react';
-import { CronJob, ServiceType, SystemStatus } from '../../types';
-import { DURATION_OPTIONS, durationLabel, isScheduleLive } from './scheduleFormat';
+import { CronJob, SystemStatus } from '../../types';
+import { isScheduleLive } from './scheduleFormat';
+import { DURATION_OPTIONS, durationLabel } from '../durations';
 import { ScheduleDraft } from '../../hooks/useScheduleEditor';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -12,6 +13,7 @@ import { ServiceName } from '../serviceNames';
 
 interface ScheduleCardsProps {
     jobs: CronJob[];
+    standards: string[];
     status: SystemStatus | null;
     locked: boolean;
     draft: ScheduleDraft;
@@ -30,7 +32,7 @@ const FIELD_CLASS = 'h-9 w-full bg-surface-sunken text-sm';
 const LABEL_CLASS = 'mb-1 block text-[10px] font-bold text-subtle-foreground uppercase';
 
 export function ScheduleCards({
-    jobs, status, locked, draft, adding, editingId, cardRef,
+    jobs, standards, status, locked, draft, adding, editingId, cardRef,
     onDraftChange, onSave, onCancel, onEdit, onDelete, onToggle,
 }: ScheduleCardsProps) {
     const form = (
@@ -67,7 +69,7 @@ export function ScheduleCards({
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            {Object.values(ServiceType).map((standard) => (
+                            {standards.map((standard) => (
                                 <SelectItem key={standard} value={standard}><ServiceName service={standard} /></SelectItem>
                             ))}
                         </SelectContent>

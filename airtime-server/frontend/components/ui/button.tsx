@@ -29,6 +29,8 @@ const buttonVariants = cva(
           "border border-success/30 bg-success/10 text-success hover:bg-success/20",
         softDanger:
           "border border-danger/30 bg-danger/10 text-danger hover:bg-danger/20",
+        softTesting:
+          "border border-testing/30 bg-testing/10 text-testing-bright hover:bg-testing/20",
         softAlt:
           "border border-accent-alt/30 bg-accent-alt/10 text-accent-alt hover:bg-accent-alt/20",
       },

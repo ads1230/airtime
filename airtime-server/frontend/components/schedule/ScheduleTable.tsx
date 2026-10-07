@@ -1,7 +1,8 @@
 import type { RefObject } from 'react';
 import { Clock, Edit2, RefreshCw, Trash2, Zap } from 'lucide-react';
-import { CronJob, ServiceType, SystemStatus } from '../../types';
-import { DURATION_OPTIONS, durationLabel, isScheduleLive } from './scheduleFormat';
+import { CronJob, SystemStatus } from '../../types';
+import { isScheduleLive } from './scheduleFormat';
+import { DURATION_OPTIONS, durationLabel } from '../durations';
 import { ScheduleDraft } from '../../hooks/useScheduleEditor';
 import { SortColumn, SortDirection } from '../../hooks/useScheduleSorting';
 import { Badge } from '../ui/badge';
@@ -14,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 
 interface ScheduleTableProps {
     jobs: CronJob[];
+    standards: string[];
     status: SystemStatus | null;
     locked: boolean;
     draft: ScheduleDraft;
@@ -34,7 +36,7 @@ interface ScheduleTableProps {
 const FIELD_CLASS = 'h-8 bg-surface-sunken text-xs';
 
 export function ScheduleTable({
-    jobs, status, locked, draft, adding, editingId, rowRef,
+    jobs, standards, status, locked, draft, adding, editingId, rowRef,
     sortColumn, sortDirection, onSort, onDraftChange, onSave, onCancel, onEdit, onDelete, onToggle,
 }: ScheduleTableProps) {
     const SortIcon = ({ column }: { column: SortColumn }) => {
@@ -81,7 +83,7 @@ export function ScheduleTable({
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        {Object.values(ServiceType).map((standard) => (
+                        {standards.map((standard) => (
                             <SelectItem key={standard} value={standard}><ServiceName service={standard} /></SelectItem>
                         ))}
                     </SelectContent>

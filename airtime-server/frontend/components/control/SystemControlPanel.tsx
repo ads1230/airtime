@@ -1,4 +1,4 @@
-import { Clock, Globe, RefreshCw, RotateCw, Server, Settings, Zap } from 'lucide-react';
+import { Clock, FlaskConical, Globe, RefreshCw, RotateCw, Server, Settings, Zap } from 'lucide-react';
 import { TimeModeBadge } from './TimeModeBadge';
 import { TimeMode } from '../../hooks/useBroadcastSettings';
 import { Button } from '../ui/button';
@@ -22,6 +22,7 @@ interface SystemControlPanelProps {
     onRestartService: () => void;
     onRestartPi: () => void;
     onCheckUpdates: () => void;
+    onOpenTimeTester: () => void;
 }
 
 const ROW_CLASS = 'flex items-center justify-between rounded-lg border border-border/50 bg-muted/50 p-2';
@@ -44,6 +45,7 @@ export function SystemControlPanel({
     onRestartService,
     onRestartPi,
     onCheckUpdates,
+    onOpenTimeTester,
 }: SystemControlPanelProps) {
     return (
         <div className="space-y-2">
@@ -122,7 +124,8 @@ export function SystemControlPanel({
                 </button>
             )}
 
-            <div className="grid grid-cols-3 gap-2 pt-1">
+            {/* Two rows of two on a phone. */}
+            <div className="grid grid-cols-2 gap-2 pt-1 sm:grid-cols-4">
                 <Button variant="softAlt" size="sm" onClick={onRestartService} className="text-[10px] font-bold tracking-wide">
                     <RotateCw size={13} />
                     AIRTIME
@@ -140,6 +143,16 @@ export function SystemControlPanel({
                 >
                     <RefreshCw size={13} />
                     UPDATE
+                </Button>
+                <Button
+                    variant="softTesting"
+                    size="sm"
+                    onClick={onOpenTimeTester}
+                    className="text-[10px] font-bold tracking-wide"
+                    title="Broadcast a fixed 12:00 for 12 or 24 hours, to check a clock is receiving AirTime"
+                >
+                    <FlaskConical size={13} />
+                    TESTER
                 </Button>
             </div>
         </div>
