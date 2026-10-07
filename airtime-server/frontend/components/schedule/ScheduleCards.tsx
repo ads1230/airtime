@@ -8,6 +8,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { ServiceName } from '../serviceNames';
 
 interface ScheduleCardsProps {
     jobs: CronJob[];
@@ -57,7 +58,8 @@ export function ScheduleCards({
                     </Select>
                 </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            {/* Service carries its location ("DCF77 (Europe)"), so it gets the larger share. */}
+            <div className="grid grid-cols-[3fr_2fr] gap-3">
                 <div>
                     <Label className={LABEL_CLASS}>Service</Label>
                     <Select value={draft.standard} onValueChange={(value) => onDraftChange({ ...draft, standard: value })}>
@@ -66,7 +68,7 @@ export function ScheduleCards({
                         </SelectTrigger>
                         <SelectContent>
                             {Object.values(ServiceType).map((standard) => (
-                                <SelectItem key={standard} value={standard}>{standard}</SelectItem>
+                                <SelectItem key={standard} value={standard}><ServiceName service={standard} /></SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
@@ -162,7 +164,7 @@ export function ScheduleCards({
                             </div>
                             <div className="rounded border border-border/50 bg-surface-sunken/50 p-2">
                                 <div className="mb-0.5 text-[10px] font-bold text-subtle-foreground uppercase">SERVICE</div>
-                                <div className="font-bold text-on-air-bright">{job.radio_details.service}</div>
+                                <div className="font-bold text-on-air-bright"><ServiceName service={job.radio_details.service} quietLocation={false} /></div>
                             </div>
                             <div className="rounded border border-border/50 bg-surface-sunken/50 p-2">
                                 <div className="mb-0.5 text-[10px] font-bold text-subtle-foreground uppercase">DUR</div>

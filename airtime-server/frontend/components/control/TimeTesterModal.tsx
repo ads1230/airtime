@@ -2,6 +2,7 @@ import { FlaskConical, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { ServiceName } from '../serviceNames';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 
 interface TimeTesterModalProps {
@@ -51,7 +52,7 @@ export function TimeTesterModal({
                             </SelectTrigger>
                             <SelectContent>
                                 {standards.map((option) => (
-                                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                                    <SelectItem key={option} value={option}><ServiceName service={option} /></SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>

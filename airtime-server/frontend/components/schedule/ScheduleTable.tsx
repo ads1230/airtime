@@ -9,6 +9,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Switch } from '../ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { ServiceName } from '../serviceNames';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 
 interface ScheduleTableProps {
@@ -76,12 +77,12 @@ export function ScheduleTable({
             </TableCell>
             <TableCell className="py-3">
                 <Select value={draft.standard} onValueChange={(value) => onDraftChange({ ...draft, standard: value })}>
-                    <SelectTrigger size="sm" className={`${FIELD_CLASS} w-24`}>
+                    <SelectTrigger size="sm" className={`${FIELD_CLASS} w-40`}>
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                         {Object.values(ServiceType).map((standard) => (
-                            <SelectItem key={standard} value={standard}>{standard}</SelectItem>
+                            <SelectItem key={standard} value={standard}><ServiceName service={standard} /></SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
@@ -189,7 +190,7 @@ export function ScheduleTable({
                                 </TableCell>
                                 <TableCell className="py-4">
                                     <Badge variant={live ? 'success' : 'onAir'} className="rounded border px-2 py-0.5 text-xs font-medium">
-                                        {job.radio_details.service}
+                                        <ServiceName service={job.radio_details.service} quietLocation={false} />
                                     </Badge>
                                 </TableCell>
                                 <TableCell className="py-4 font-mono text-xs text-muted-foreground">

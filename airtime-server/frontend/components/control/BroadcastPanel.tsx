@@ -2,6 +2,7 @@ import { Loader2, Play, Square } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { ServiceName } from '../serviceNames';
 
 export const DURATION_OPTIONS = [
     { label: '10 min', value: 10 },
@@ -29,7 +30,8 @@ const LABEL_CLASS = 'text-[10px] font-bold tracking-wider text-muted-foreground 
 
 // At the foot of the clock card. While on air the pickers are locked and show
 // what is being sent, and the button stays put and turns into Stop. On a phone
-// the button gets its own row below the pickers.
+// the button gets its own row below the pickers, and Service, which carries its
+// location ("DCF77 (Europe)"), takes the larger share of the row.
 export function BroadcastPanel({
     standards,
     standard,
@@ -45,8 +47,8 @@ export function BroadcastPanel({
     const shownDuration = isTransmitting ? (activeDuration || duration) : duration;
 
     return (
-        <div className="grid grid-cols-2 items-end gap-2 sm:flex">
-            <div className="min-w-0 space-y-1 sm:w-32 sm:shrink-0">
+        <div className="grid grid-cols-[3fr_2fr] items-end gap-2 sm:flex">
+            <div className="min-w-0 space-y-1 sm:w-44 sm:shrink-0">
                 <Label className={LABEL_CLASS}>Service</Label>
                 <Select
                     value={shownStandard}
@@ -58,7 +60,7 @@ export function BroadcastPanel({
                     </SelectTrigger>
                     <SelectContent>
                         {standards.map((option) => (
-                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                            <SelectItem key={option} value={option}><ServiceName service={option} /></SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
