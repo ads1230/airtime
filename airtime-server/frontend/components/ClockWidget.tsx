@@ -116,13 +116,13 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
         countdown: 'text-on-air-bright',
     };
 
-    // What is on air: beside the logo on a wide screen, in the strip on a phone,
-    // where there is no room beside the logo. The time mode is not repeated here;
-    // the label over the big clock already gives the offset or fixed time.
-    const transmitting = (alignRight: boolean) => (
-        <>
+    // What is on air and for how long: beside the logo on a wide screen, in a strip
+    // above the controls on a phone, where there is no room beside the logo. The time
+    // mode is not repeated here; the label over the big clock gives the offset or fixed time.
+    const transmitting = (
+        <div>
             <div className="text-[12px] font-bold tracking-wider text-muted-foreground uppercase">Transmitting</div>
-            <div className={`flex items-center gap-2 text-2xl font-bold text-foreground ${alignRight ? 'justify-end' : ''}`}>
+            <div className="flex items-center gap-2 text-2xl font-bold text-foreground">
                 {serviceName}
                 {timeTesterEnabled && (
                     <Badge variant="testing" className="mt-0.5 rounded-md border px-1.5 py-0 text-[9px] font-bold tracking-widest uppercase">
@@ -130,7 +130,19 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
                     </Badge>
                 )}
             </div>
-        </>
+        </div>
+    );
+
+    // As wide as the countdown was at the start, so it narrowing at 59:59 or 9:59
+    // doesn't shift Transmitting beside it.
+    const countdownWidth = `${formatCountdown(Math.max(countdown, (services?.txtempus_duration || 0) * 60)).length}ch`;
+    const remaining = (
+        <div className="shrink-0 text-right">
+            <div className="text-[12px] font-bold tracking-wider text-muted-foreground uppercase">Remaining</div>
+            <div className={`mt-0.5 font-mono text-3xl leading-none font-bold drop-shadow-md ${c.countdown}`} style={{ minWidth: countdownWidth }}>
+                {formatCountdown(countdown)}
+            </div>
+        </div>
     );
 
     return (
@@ -166,7 +178,10 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
                 {/* Also held in place between broadcasts: on a narrow phone it takes width
                     from the date beside it, which must wrap the same way on and off air. */}
                 <div className={`flex shrink-0 items-center gap-6 pt-2 pr-4 ${isTransmitting ? 'animate-fade-in' : 'invisible'}`}>
-                    <div className="hidden text-right md:block">{transmitting(true)}</div>
+                    <div className="hidden items-center gap-6 md:flex">
+                        {transmitting}
+                        {remaining}
+                    </div>
 
                     <div className="relative">
                         <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 duration-1000 ${c.ping}`}></span>
@@ -180,18 +195,12 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
             </div>
 
             <div className="z-10 mt-auto">
-                {/* Kept in place but hidden between broadcasts, so starting one moves
-                    neither the broadcast button nor the rest of the page. */}
-                <div className={`flex min-h-[50px] items-center border-t border-muted pt-3 ${isTransmitting ? '' : 'invisible'}`}>
-                    <div className={`flex w-full items-center ${isTransmitting ? 'animate-slide-up' : ''}`}>
-                        <div className="md:hidden">{transmitting(false)}</div>
-
-                        <div className="ml-auto shrink-0 text-right">
-                            <div className="text-[12px] font-bold tracking-wider text-muted-foreground uppercase">Remaining</div>
-                            <div className={`mt-0.5 font-mono text-3xl leading-none font-bold drop-shadow-md ${c.countdown}`}>
-                                {formatCountdown(countdown)}
-                            </div>
-                        </div>
+                {/* Phones only. Kept in place but hidden between broadcasts, so starting
+                    one moves neither the broadcast button nor the rest of the page. */}
+                <div className={`flex min-h-[50px] items-center border-t border-muted pt-3 md:hidden ${isTransmitting ? '' : 'invisible'}`}>
+                    <div className={`flex w-full items-center justify-between ${isTransmitting ? 'animate-slide-up' : ''}`}>
+                        {transmitting}
+                        {remaining}
                     </div>
                 </div>
 
