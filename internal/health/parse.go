@@ -11,6 +11,9 @@ type NTP struct {
 	Score         float64
 	LastRxSeconds float64
 	Server        string
+	// OffsetMS is how far the clock was from the source chrony follows (the
+	// one marked *) at its last sample; nil until chrony has picked one.
+	OffsetMS *float64
 }
 
 type Ping struct {
@@ -56,6 +59,7 @@ func ParseChronySources(output string) NTP {
 
 	best := NTP{LastRxSeconds: 9999, Server: "unknown"}
 	found := false
+	var selectedOffset *float64
 
 	for _, line := range lines[2:] {
 		fields := strings.Fields(line)
@@ -70,13 +74,36 @@ func ParseChronySources(output string) NTP {
 			best = NTP{Synced: true, LastRxSeconds: lastRx, Server: fields[1]}
 			found = true
 		}
+		if len(fields[0]) == 2 && fields[0][1] == '*' {
+			selectedOffset = sampleOffsetMS(line)
+		}
 	}
 
 	if !found {
 		return NTP{LastRxSeconds: 9999, Server: "unknown"}
 	}
 	best.Score = NTPScore(best.LastRxSeconds)
+	best.OffsetMS = selectedOffset
 	return best
+}
+
+// The "Last sample" column reads like "+12us[  +14us] +/-   11ms": the adjusted
+// offset, then the measured one in brackets, then the error bound.
+var sampleOffset = regexp.MustCompile(`([+-]?\d+(?:\.\d+)?)(ns|us|ms|s)\[`)
+
+var unitMS = map[string]float64{"ns": 1e-6, "us": 1e-3, "ms": 1, "s": 1e3}
+
+func sampleOffsetMS(line string) *float64 {
+	match := sampleOffset.FindStringSubmatch(line)
+	if match == nil {
+		return nil
+	}
+	value, err := strconv.ParseFloat(match[1], 64)
+	if err != nil {
+		return nil
+	}
+	ms := value * unitMS[match[2]]
+	return &ms
 }
 
 var pingTime = regexp.MustCompile(`time=([\d.]+)\s*ms`)

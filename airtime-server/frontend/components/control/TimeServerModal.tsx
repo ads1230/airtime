@@ -4,6 +4,7 @@ import { TimeServerInfo } from '../../types';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
+import { formatClockOffset } from '../clockOffset';
 
 interface Preset {
     id: string;
@@ -33,8 +34,7 @@ export function describeTimeServers(servers: string[]): string {
 
 function describeSource(info: TimeServerInfo, syncing: boolean): string {
     if (info.current) {
-        const offset = Math.abs(info.current.offset_ms);
-        return `In use: ${info.current.name} · stratum ${info.current.stratum} · within ${offset < 10 ? offset.toFixed(1) : offset.toFixed(0)} ms`;
+        return `In use: ${info.current.name} · stratum ${info.current.stratum} · within ${formatClockOffset(info.current.offset_ms)}`;
     }
     return syncing ? 'Waiting for chrony to pick a server…' : 'Not synced to a server yet.';
 }

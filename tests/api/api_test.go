@@ -277,6 +277,25 @@ func TestStatusReportsVersion(t *testing.T) {
 	}
 }
 
+func TestStatusReportsTheClockOffset(t *testing.T) {
+	h, s, _ := newServer(t)
+
+	// Null until the monitor has seen chrony pick a source.
+	ntp := decode(t, do(t, h, http.MethodGet, "/api/status", ""))["ntp_status"].(map[string]any)
+	if offset, present := ntp["offset_ms"]; !present || offset != nil {
+		t.Fatalf("got offset_ms %v (present %v), want null", offset, present)
+	}
+
+	offset := 0.25
+	if err := s.SetStatus("ntp_status", "offset_ms", &offset); err != nil {
+		t.Fatal(err)
+	}
+	ntp = decode(t, do(t, h, http.MethodGet, "/api/status", ""))["ntp_status"].(map[string]any)
+	if ntp["offset_ms"] != 0.25 {
+		t.Fatalf("got offset_ms %v, want 0.25", ntp["offset_ms"])
+	}
+}
+
 func TestMetricsAreServed(t *testing.T) {
 	h, _, _ := newServer(t)
 

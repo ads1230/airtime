@@ -29,11 +29,14 @@ func (s *server) getStatus(w http.ResponseWriter, r *http.Request) {
 		Score         float64 `json:"score"`
 		LastRxSeconds float64 `json:"last_rx_seconds"`
 		Server        string  `json:"server"`
+		// Null until chrony has picked a source to follow.
+		OffsetMS *float64 `json:"offset_ms"`
 	}
 	s.Store.Status("ntp_status", "synced", &ntp.Synced)
 	s.Store.Status("ntp_status", "score", &ntp.Score)
 	s.Store.Status("ntp_status", "last_rx_seconds", &ntp.LastRxSeconds)
 	s.Store.Status("ntp_status", "server", &ntp.Server)
+	s.Store.Status("ntp_status", "offset_ms", &ntp.OffsetMS)
 
 	var internet struct {
 		Connected bool    `json:"connected"`

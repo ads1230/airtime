@@ -99,6 +99,7 @@ func (m *Monitor) sample(ctx context.Context) {
 	m.store.SetStatus("ntp_status", "score", ntp.Score)
 	m.store.SetStatus("ntp_status", "last_rx_seconds", ntp.LastRxSeconds)
 	m.store.SetStatus("ntp_status", "server", ntp.Server)
+	m.store.SetStatus("ntp_status", "offset_ms", ntp.OffsetMS)
 
 	ping := m.readPing(ctx)
 	m.store.SetStatus("internet_status", "connected", ping.Connected)

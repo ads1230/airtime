@@ -9,6 +9,9 @@ export interface NtpStatus {
     score: number;
     last_rx_seconds: number;
     server: string;
+    // How far the clock was from the source chrony follows at its last sample;
+    // null until chrony has picked one.
+    offset_ms?: number | null;
 }
 
 export interface ServicesStatus {

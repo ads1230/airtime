@@ -2,6 +2,7 @@ import React from 'react';
 import { SystemMetrics, SystemStatus } from '../types';
 import { Card } from './Card';
 import { Thermometer, Cpu, CircuitBoard, Clock, Globe, Radio } from 'lucide-react';
+import { formatClockOffset } from './clockOffset';
 
 const formatTimeAgo = (seconds: number): string => {
     if (seconds < 0) return '--';
@@ -101,12 +102,13 @@ export function PerformanceWidget({ metrics, status }: Props) {
                     <UsageRing icon={CircuitBoard} label="RAM" percent={metrics.memory.percent} colorClass="text-meter-ram" />
                 </div>
 
-                <div className="grid grid-cols-4 gap-4">
+                {/* Values stay on one line; a phone gets tighter gaps so they fit. */}
+                <div className="grid grid-cols-4 gap-2 sm:gap-4">
                     <div className="flex flex-col items-start gap-1.5">
                         <div className="flex items-center gap-1.5 text-xs font-medium text-nowrap text-muted-foreground uppercase">
                             <Thermometer size={14} /> TEMP
                         </div>
-                        <div className={`font-mono text-sm font-bold ${getTempColor(metrics.temperature)}`}>
+                        <div className={`font-mono text-sm font-bold whitespace-nowrap ${getTempColor(metrics.temperature)}`}>
                             {metrics.temperature > 0 ? `${metrics.temperature.toFixed(1)}°C` : 'N/A'}
                         </div>
                     </div>
@@ -115,18 +117,26 @@ export function PerformanceWidget({ metrics, status }: Props) {
                         <div className="flex items-center gap-1.5 text-xs font-medium text-nowrap text-muted-foreground uppercase">
                             <Radio size={14} /> NTP SYNC
                         </div>
-                        <div className={`font-mono text-sm font-bold ${status?.ntp_status.synced ? 'text-success' : 'text-danger'}`}>
+                        <div className={`font-mono text-sm font-bold whitespace-nowrap ${status?.ntp_status.synced ? 'text-success' : 'text-danger'}`}>
                             {status?.ntp_status.synced
                                 ? formatTimeAgo(status.ntp_status.last_rx_seconds || 0)
                                 : 'NO SYNC'}
                         </div>
+                        {status?.ntp_status.synced && status.ntp_status.offset_ms != null && (
+                            <div
+                                className="-mt-1 font-mono text-[11px] whitespace-nowrap text-muted-foreground"
+                                title="How far the Pi's clock was from its time server at the last check"
+                            >
+                                ±{formatClockOffset(status.ntp_status.offset_ms)}
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex flex-col items-center gap-1.5">
                         <div className="flex items-center gap-1.5 text-xs font-medium text-nowrap text-muted-foreground uppercase">
                             <Globe size={14} /> PING
                         </div>
-                        <div className={`font-mono text-sm font-bold ${status?.internet_status.connected ? 'text-on-air-bright' : 'text-danger'}`}>
+                        <div className={`font-mono text-sm font-bold whitespace-nowrap ${status?.internet_status.connected ? 'text-on-air-bright' : 'text-danger'}`}>
                             {status?.internet_status.connected
                                 ? `${Math.round(status.internet_status.ping_ms)}ms`
                                 : 'OFFLINE'}

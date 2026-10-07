@@ -30,6 +30,66 @@ func TestNTPPicksTheMostRecentlyHeardSource(t *testing.T) {
 	}
 }
 
+func TestNTPReadsTheOffsetOfTheSelectedSource(t *testing.T) {
+	// The offset comes from the source marked *, the one chrony follows, even
+	// when another was heard from more recently.
+	const sample = `MS Name/IP address         Stratum Poll Reach LastRx Last sample
+===============================================================================
+^- 85.199.214.100                1   6   377     5   -900us[ -900us] +/-   22ms
+^* 162.159.200.1                 3   6   377    31   +12us[  +14us] +/-   11ms
+`
+	got := health.ParseChronySources(sample)
+
+	if got.Server != "85.199.214.100" || got.LastRxSeconds != 5 {
+		t.Fatalf("got %q at %vs, want the freshest source for the sync age", got.Server, got.LastRxSeconds)
+	}
+	if got.OffsetMS == nil {
+		t.Fatal("got no offset, want the selected source's")
+	}
+	if diff := *got.OffsetMS - 0.012; diff > 1e-9 || diff < -1e-9 {
+		t.Fatalf("got %v ms, want 0.012", *got.OffsetMS)
+	}
+}
+
+func TestNTPOffsetUnits(t *testing.T) {
+	cases := []struct {
+		sample string
+		want   float64
+	}{
+		{"+567ns[ +600ns] +/-  100us", 0.000567},
+		{"-1234us[-1250us] +/-    5ms", -1.234},
+		{"+3ms[   +3ms] +/-   40ms", 3},
+		{"-2s[    -2s] +/-  120ms", -2000},
+	}
+	for _, tc := range cases {
+		output := "MS Name/IP address         Stratum Poll Reach LastRx Last sample\n" +
+			"===============================================================================\n" +
+			"^* 192.0.2.1                     2   6   377    10   " + tc.sample + "\n"
+		got := health.ParseChronySources(output)
+		if got.OffsetMS == nil {
+			t.Fatalf("%q: got no offset", tc.sample)
+		}
+		if diff := *got.OffsetMS - tc.want; diff > 1e-9 || diff < -1e-9 {
+			t.Fatalf("%q: got %v ms, want %v", tc.sample, *got.OffsetMS, tc.want)
+		}
+	}
+}
+
+func TestNTPOffsetIsUnknownUntilASourceIsSelected(t *testing.T) {
+	const sample = `MS Name/IP address         Stratum Poll Reach LastRx Last sample
+===============================================================================
+^? 162.159.200.1                 3   6     1     3   +12us[  +14us] +/-   11ms
+^+ 85.199.214.100                1   6   377    20   -1ms[  -1ms] +/-   22ms
+`
+	got := health.ParseChronySources(sample)
+	if !got.Synced {
+		t.Fatal("got not synced, want sources heard from")
+	}
+	if got.OffsetMS != nil {
+		t.Fatalf("got %v ms, want no offset without a selected source", *got.OffsetMS)
+	}
+}
+
 func TestNTPWithNoUsableSources(t *testing.T) {
 	got := health.ParseChronySources("MS Name/IP address\n====\n")
 	if got.Synced {
