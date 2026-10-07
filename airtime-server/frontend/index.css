@@ -3,6 +3,15 @@
 @import './themes.css';
 
 /*
+  The two typefaces ship with the dashboard rather than coming from Google Fonts,
+  so it looks the same on a network without internet and a visit contacts nothing
+  but the Pi. Each is one variable file per script; a browser fetches only the
+  scripts a page uses, which for this dashboard is Latin.
+*/
+@import '@fontsource-variable/inter/wght.css';
+@import '@fontsource-variable/jetbrains-mono/wght.css';
+
+/*
   dist/ is a build output that is still tracked, so Tailwind's automatic source
   detection scans it: every build then finds the previous build's class names
   and emits them again, and the stylesheet ratchets upwards (69.89 kB -> 82.46
@@ -94,8 +103,8 @@
 }
 
 @theme inline {
-  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  --font-sans: 'Inter Variable', Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
