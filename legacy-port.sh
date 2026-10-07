@@ -2,7 +2,7 @@
 # Ports a pre-2.0 AirTime to the daemon when its own update button cannot.
 set -Eeuo pipefail
 
-repository="aleh11/airtime"
+repository="ads1230/airtime"
 state_dir="/var/lib/airtime"
 latest_installer="https://github.com/${repository}/releases/latest/download/install.sh"
 

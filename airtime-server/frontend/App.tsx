@@ -130,7 +130,7 @@ It stays on ${status?.version ?? 'the current build'} until a stable release is 
             <a href="https://airtime.diy/" target="_blank" rel="noreferrer" className="font-mono text-xs text-subtle-foreground transition-colors hover:text-foreground">
               Website
             </a>
-            <a href="https://github.com/aleh11/airtime" target="_blank" rel="noreferrer" className="text-subtle-foreground transition-colors hover:text-foreground">
+            <a href="https://github.com/ads1230/airtime" target="_blank" rel="noreferrer" className="text-subtle-foreground transition-colors hover:text-foreground">
               <Github size={20} />
             </a>
             <Button

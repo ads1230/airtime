@@ -41,7 +41,7 @@ This process assumes you have flashed a Raspberry Pi 2W and have SSH access, thi
 Run **one command**:
 
 ```bash
-curl -fsSL https://github.com/aleh11/airtime/releases/latest/download/install.sh | sudo bash
+curl -fsSL https://github.com/ads1230/airtime/releases/latest/download/install.sh | sudo bash
 ```
 
 > **Already running AirTime from before 1 September 2026?**
@@ -126,7 +126,7 @@ never reach the new version. Nothing is wrong with your Pi, and nothing is lost.
 Log in over SSH and run:
 
 ```bash
-curl -fsSL https://github.com/aleh11/airtime/releases/latest/download/legacy-port.sh | sudo bash
+curl -fsSL https://github.com/ads1230/airtime/releases/latest/download/legacy-port.sh | sudo bash
 ```
 
 That script does what the button would have: stops and removes the old

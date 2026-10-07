@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	DefaultReleaseAPI = "https://api.github.com/repos/aleh11/airtime/releases/latest"
+	DefaultReleaseAPI = "https://api.github.com/repos/ads1230/airtime/releases/latest"
 	// Only this endpoint returns prereleases; /releases/latest excludes them by design.
-	DefaultPrereleaseAPI = "https://api.github.com/repos/aleh11/airtime/releases?per_page=20"
+	DefaultPrereleaseAPI = "https://api.github.com/repos/ads1230/airtime/releases?per_page=20"
 )
 
 type Info struct {

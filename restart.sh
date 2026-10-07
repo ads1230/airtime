@@ -2,7 +2,7 @@
 # The last thing the git updater ever does: hand over to the release installer.
 set -Eeuo pipefail
 
-repository="aleh11/airtime"
+repository="ads1230/airtime"
 latest_installer="https://github.com/${repository}/releases/latest/download/install.sh"
 installer_url="${AIRTIME_INSTALLER_URL:-}"
 release_base_url="${AIRTIME_RELEASE_BASE_URL:-}"
