@@ -151,6 +151,7 @@ It stays on ${status?.version ?? 'the current build'} until a stable release is 
           <div className="order-1 lg:col-span-7">
             <ClockWidget
               status={status}
+              radioConfig={radioConfig}
               timeTesterEnabled={timeTesterEnabled}
             />
           </div>
@@ -158,6 +159,8 @@ It stays on ${status?.version ?? 'the current build'} until a stable release is 
           <div className="order-2 lg:col-span-5 lg:row-span-2 h-full">
             <ControlWidget
               radioConfig={radioConfig}
+              systemTime={status?.system_time}
+              systemTimeReceivedAt={status?.received_at}
               onBroadcastStart={() => setTimeout(refreshStatus, 1000)}
               onCheckUpdates={() => update.check(true)}
               onSettingsSaved={refresh}

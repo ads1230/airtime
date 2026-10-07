@@ -19,6 +19,8 @@ const FALLBACK_STANDARDS = ['DCF77', 'WWVB', 'MSF', 'JJY40', 'JJY60'];
 
 interface ControlWidgetProps {
     radioConfig: RadioConfig | null;
+    systemTime?: string;
+    systemTimeReceivedAt?: number;
     onBroadcastStart: () => void;
     onCheckUpdates: () => void;
     onSettingsSaved?: () => void;
@@ -39,6 +41,8 @@ interface Prompt {
 
 export function ControlWidget({
     radioConfig,
+    systemTime,
+    systemTimeReceivedAt,
     onBroadcastStart,
     onCheckUpdates,
     onSettingsSaved,
@@ -198,6 +202,8 @@ export function ControlWidget({
 
             {showTimeSettings && (
                 <TimeSettingsModal
+                    systemTime={systemTime}
+                    systemTimeReceivedAt={systemTimeReceivedAt}
                     timeMode={settings.timeMode}
                     fixedTime={settings.fixedTime}
                     offsetHours={settings.offsetHours}

@@ -11,7 +11,8 @@ export function useSystemStatus() {
 
     const refresh = async () => {
         try {
-            setStatus(await api.getStatus());
+            const next = await api.getStatus();
+            setStatus({ ...next, received_at: Date.now() });
         } catch (e) {
             console.error('Status poll failed', e);
         }

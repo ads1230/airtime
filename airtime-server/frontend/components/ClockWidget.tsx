@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Card } from './Card';
 import { Badge } from './ui/badge';
-import { SystemStatus } from '../types';
+import { RadioConfig, SystemStatus } from '../types';
 import { RadioTower } from 'lucide-react';
-import { fixedTimeShiftMs, formatUtcOffset, parsePiClock, piWallClock } from './piClock';
+import { fixedTimeShiftMs, formatOffset, formatUtcOffset, formatWallTime } from './piClock';
+import { usePiClock } from '../hooks/usePiClock';
 
 const formatTimeAgo = (seconds: number): string => {
     if (seconds < 0) return '--';
@@ -15,34 +16,18 @@ const formatTimeAgo = (seconds: number): string => {
 
 interface ClockWidgetProps {
     status: SystemStatus | null;
+    radioConfig?: RadioConfig | null;
     timeTesterEnabled?: boolean;
 }
 
-export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, timeTesterEnabled = false }) => {
-    const [displayTime, setDisplayTime] = useState<Date>(new Date());
-    const [serverOffset, setServerOffset] = useState<number>(0);
-    const [piUtcOffset, setPiUtcOffset] = useState<number | null>(null);
-    const [initDone, setInitDone] = useState(false);
+export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, timeTesterEnabled = false }) => {
+    const { instant: displayTime, utcOffset: piUtcOffset, piTime } = usePiClock(status?.system_time, status?.received_at);
     const [countdown, setCountdown] = useState<number>(0);
 
     useEffect(() => {
-        if (status?.system_time) {
-            const clock = parsePiClock(status.system_time);
-            if (clock) {
-                setServerOffset(clock.instantMs - Date.now());
-                setPiUtcOffset(clock.utcOffsetMinutes);
-            }
-            if (!initDone) setInitDone(true);
-        }
-    }, [status]);
-
-    useEffect(() => {
-        const intervalId = setInterval(() => {
-            setDisplayTime(new Date(new Date().getTime() + serverOffset));
-            setCountdown(prev => Math.max(0, prev - 1));
-        }, 1000);
+        const intervalId = setInterval(() => setCountdown(prev => Math.max(0, prev - 1)), 1000);
         return () => clearInterval(intervalId);
-    }, [serverOffset]);
+    }, []);
 
     useEffect(() => {
         if (status?.services.txtempus_remaining_seconds) {
@@ -52,16 +37,11 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, timeTesterEnab
         }
     }, [status]);
 
-    // Both take a piWallClock date, which is only correct read in UTC.
-    const formatTime = (date: Date) => {
-        return date.toLocaleTimeString('en-US', { timeZone: 'UTC', hourCycle: 'h23', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    };
-
+    // Takes a piWallClock date, which is only correct read in UTC.
     const formatDate = (date: Date) => {
         return date.toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     };
 
-    const piTime = piUtcOffset === null ? null : piWallClock(displayTime.getTime(), piUtcOffset);
     const deviceUtcOffset = -displayTime.getTimezoneOffset();
     const zoneDiffers = piUtcOffset !== null && piUtcOffset !== deviceUtcOffset;
 
@@ -96,6 +76,13 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, timeTesterEnab
     const broadcastOnOtherDay = !!broadcastTime && !!piTime && broadcastTime.getUTCDate() !== piTime.getUTCDate();
     const broadcastTone = fixedTime ? 'text-testing-bright' : (offsetSign > 0 ? 'text-offset-positive' : 'text-offset-negative');
 
+    // Between broadcasts, the offset the next one will carry, decided the way the daemon builds its command.
+    const fixedConfigured = radioConfig?.default_time_mode === 'fixed_time' && !!radioConfig.default_fixed_time;
+    const offsetConfigured = !fixedConfigured && (radioConfig?.default_time_mode === 'time_now_with_offset' || !!radioConfig?.default_offset_enabled)
+        ? (radioConfig?.default_offset || 0)
+        : 0;
+    const offsetTime = !isTransmitting && piTime && offsetConfigured !== 0 ? new Date(piTime.getTime() + offsetConfigured * 60_000) : null;
+
     // A Time Tester run or a fixed-time Broadcast reads as "testing"; everything
     // else is a normal on-air Broadcast.
     const useTesting = timeTesterEnabled || isFixedTimeBroadcast;
@@ -125,7 +112,7 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, timeTesterEnab
             <div className="z-10 mb-3 flex items-start justify-between">
                 <div>
                     <div className="mb-1 font-mono text-4xl leading-none font-bold tracking-tight text-heading md:text-5xl">
-                        {piTime ? formatTime(piTime) : '--:--:--'}
+                        {piTime ? formatWallTime(piTime) : '--:--:--'}
                     </div>
                     <div className="min-h-4 text-xs font-medium text-muted-foreground">
                         {piTime && piUtcOffset !== null && `${formatDate(piTime)} · ${formatUtcOffset(piUtcOffset)}`}
@@ -133,6 +120,14 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, timeTesterEnab
                     {zoneDiffers && (
                         <div className="mt-0.5 text-[11px] font-medium text-warning">
                             Time zone differs from this device ({formatUtcOffset(deviceUtcOffset)})
+                        </div>
+                    )}
+                    {offsetTime && (
+                        <div className="mt-1.5 flex items-baseline gap-1.5 text-[11px] font-medium text-muted-foreground">
+                            With offset {formatOffset(offsetConfigured)}
+                            <span className={`font-mono text-sm font-bold ${offsetConfigured > 0 ? 'text-offset-positive' : 'text-offset-negative'}`}>
+                                {formatWallTime(offsetTime)}
+                            </span>
                         </div>
                     )}
                 </div>
@@ -197,7 +192,7 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, timeTesterEnab
                                 {broadcastTime && (
                                     <div className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 text-[11px] font-medium text-muted-foreground">
                                         Broadcasting
-                                        <span className={`font-mono text-sm font-bold ${broadcastTone}`}>{formatTime(broadcastTime)}</span>
+                                        <span className={`font-mono text-sm font-bold ${broadcastTone}`}>{formatWallTime(broadcastTime)}</span>
                                         {broadcastOnOtherDay && (
                                             <span>{broadcastTime.toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' })}</span>
                                         )}

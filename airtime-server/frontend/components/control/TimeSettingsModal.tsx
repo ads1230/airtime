@@ -4,8 +4,12 @@ import { TimeMode } from '../../hooks/useBroadcastSettings';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { formatWallTime } from '../piClock';
+import { usePiClock } from '../../hooks/usePiClock';
 
 interface TimeSettingsModalProps {
+    systemTime?: string;
+    systemTimeReceivedAt?: number;
     timeMode: TimeMode;
     fixedTime: string;
     offsetHours: number;
@@ -28,6 +32,8 @@ function clamp(value: string, max: number, pad: boolean): string {
 }
 
 export function TimeSettingsModal({
+    systemTime,
+    systemTimeReceivedAt,
     timeMode,
     fixedTime,
     offsetHours,
@@ -42,6 +48,8 @@ export function TimeSettingsModal({
 }: TimeSettingsModalProps) {
     const [hours, setHours] = useState('0');
     const [minutes, setMinutes] = useState('00');
+    const { piTime } = usePiClock(systemTime, systemTimeReceivedAt);
+    const editedOffset = offsetSign * ((parseInt(hours) || 0) * 60 + (parseInt(minutes) || 0));
 
     useEffect(() => {
         setHours(offsetHours.toString());
@@ -130,6 +138,14 @@ export function TimeSettingsModal({
                                     />
                                     <span className="shrink-0 text-xs font-bold text-subtle-foreground">m</span>
                                 </div>
+                                {piTime && (
+                                    <div className="flex items-center justify-between rounded-md bg-surface-sunken/80 px-2.5 py-1.5 font-mono text-xs">
+                                        <span className="text-muted-foreground">Now {formatWallTime(piTime)}</span>
+                                        <span className={`font-bold ${editedOffset < 0 ? 'text-offset-negative' : 'text-offset-positive'}`}>
+                                            → {formatWallTime(new Date(piTime.getTime() + editedOffset * 60_000))}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

@@ -53,6 +53,8 @@ export interface SystemStatus {
     app_config: AppConfig;
     system_time: string;
     version?: string;
+    // Set by the dashboard when the status arrives, so system_time can be aged.
+    received_at?: number;
 }
 
 export interface TimeZoneInfo {

@@ -58,6 +58,17 @@ export function zoneUtcOffset(zone: string, at: Date = new Date()): number | nul
     }
 }
 
+// HH:MM:SS for a piWallClock date, which is only correct read in UTC.
+export function formatWallTime(date: Date): string {
+    return date.toLocaleTimeString('en-US', { timeZone: 'UTC', hourCycle: 'h23', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+// "+1h 0m", "-30m": the way the dashboard writes a broadcast offset.
+export function formatOffset(minutes: number): string {
+    const hours = Math.floor(Math.abs(minutes) / 60);
+    return `${minutes < 0 ? '-' : '+'}${hours > 0 ? `${hours}h ` : ''}${Math.abs(minutes) % 60}m`;
+}
+
 export function formatUtcOffset(minutes: number): string {
     if (minutes === 0) return 'UTC';
     const sign = minutes < 0 ? '−' : '+';
