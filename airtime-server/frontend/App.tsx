@@ -183,7 +183,7 @@ It stays on ${status?.version ?? 'the current build'} until a stable release is 
 
           {/* On a wide screen System Control sits to the right of System Statistics;
               stacked on a phone it stays straight under the clock card. */}
-          <div className="order-2 lg:order-3 lg:col-span-5">
+          <div className="order-2 lg:order-3 lg:col-span-7">
             <ControlWidget
               radioConfig={radioConfig}
               settings={broadcast.settings}
@@ -196,7 +196,7 @@ It stays on ${status?.version ?? 'the current build'} until a stable release is 
             />
           </div>
 
-          <div className="order-3 lg:order-2 lg:col-span-7">
+          <div className="order-3 lg:order-2 lg:col-span-5">
             <PerformanceWidget metrics={metrics} status={status} />
           </div>
 
