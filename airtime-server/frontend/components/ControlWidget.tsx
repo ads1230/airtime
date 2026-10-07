@@ -4,21 +4,18 @@ import { RadioConfig, TimeZoneInfo } from '../types';
 import { api } from '../services/api';
 import { ConfirmModal, ModalType } from './ConfirmModal';
 import { RestartOverlay } from './RestartOverlay';
-import { ServicePicker } from './control/BroadcastPanel';
 import { SystemControlPanel } from './control/SystemControlPanel';
 import { TimeSettingsModal } from './control/TimeSettingsModal';
 import { TimeTesterModal } from './control/TimeTesterModal';
 import { TimeZoneModal } from './control/TimeZoneModal';
 import { TimeServerModal, describeTimeServers } from './control/TimeServerModal';
 import { useTimeServers } from '../hooks/useTimeServers';
-import { BroadcastSettings, TimeTester } from '../hooks/useBroadcastControl';
+import { BroadcastSettings, TimeTester, availableStandards } from '../hooks/useBroadcastControl';
 import { useSystemActions } from '../hooks/useSystemActions';
-
-const FALLBACK_STANDARDS = ['DCF77', 'WWVB', 'MSF', 'JJY40', 'JJY60'];
 
 interface ControlWidgetProps {
     radioConfig: RadioConfig | null;
-    // Shared with the clock card, which holds the duration and the broadcast button.
+    // Shared with the clock card, which holds the service, duration and broadcast button.
     settings: BroadcastSettings;
     tester: TimeTester;
     systemTime?: string;
@@ -26,7 +23,6 @@ interface ControlWidgetProps {
     onBroadcastStart: () => void;
     onCheckUpdates: () => void;
     isTransmitting?: boolean;
-    activeService?: string | null;
 }
 
 interface Prompt {
@@ -46,7 +42,6 @@ export function ControlWidget({
     onBroadcastStart,
     onCheckUpdates,
     isTransmitting = false,
-    activeService,
 }: ControlWidgetProps) {
     const system = useSystemActions();
 
@@ -58,7 +53,7 @@ export function ControlWidget({
     const timeServers = useTimeServers();
     const [showTimeServer, setShowTimeServer] = useState(false);
     const [prompt, setPrompt] = useState<Prompt | null>(null);
-    const standards = radioConfig?.available_services ?? FALLBACK_STANDARDS;
+    const standards = availableStandards(radioConfig);
 
     useEffect(() => {
         api.getTimeZone()
@@ -105,18 +100,8 @@ export function ControlWidget({
 
     return (
         <>
-            <Card title="Broadcast Control" className="h-full">
-                <div className="space-y-1 -mt-2">
-                    <ServicePicker
-                        standards={standards}
-                        standard={settings.standard}
-                        isTransmitting={isTransmitting}
-                        activeStandard={activeService}
-                        onChange={(standard) => settings.saveDefaults(standard, settings.duration)}
-                    />
-
-                    <div className="my-2 border-t border-muted/50" />
-
+            <Card title="System Control" className="h-full">
+                <div className="-mt-2">
                     <SystemControlPanel
                         ledsEnabled={ledsEnabled}
                         isTransmitting={isTransmitting}

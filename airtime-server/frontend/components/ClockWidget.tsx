@@ -18,7 +18,7 @@ interface ClockWidgetProps {
     status: SystemStatus | null;
     radioConfig?: RadioConfig | null;
     timeTesterEnabled?: boolean;
-    // The duration and the broadcast button, at the foot of the card.
+    // The service, duration and broadcast button, at the foot of the card.
     actions?: React.ReactNode;
 }
 
@@ -161,26 +161,26 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
                     )}
                 </div>
 
-                {isTransmitting && (
-                    <div className="animate-fade-in flex items-center gap-6 pt-2 pr-4">
-                        <div className="relative hidden px-2 py-1 md:block md:px-4 md:py-1.5">
-                            <div className={`absolute inset-0 animate-pulse rounded-md border-2 blur-sm ${c.border}`}></div>
-                            <div className={`absolute inset-0 rounded-md border ${c.borderSolid}`}></div>
-                            <span className={`relative z-10 text-xs font-black tracking-widest md:text-2xl ${c.text} ${c.glow}`}>
-                                ON AIR
-                            </span>
-                        </div>
-
-                        <div className="relative">
-                            <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 duration-1000 ${c.ping}`}></span>
-                            <img
-                                src="/airtime-logo.png"
-                                alt="Broadcasting"
-                                className={`relative z-10 h-12 w-12 object-contain ${c.logoGlow}`}
-                            />
-                        </div>
+                {/* Also held in place between broadcasts: on a narrow phone it takes width
+                    from the date beside it, which must wrap the same way on and off air. */}
+                <div className={`flex shrink-0 items-center gap-6 pt-2 pr-4 ${isTransmitting ? 'animate-fade-in' : 'invisible'}`}>
+                    <div className="relative hidden px-2 py-1 md:block md:px-4 md:py-1.5">
+                        <div className={`absolute inset-0 animate-pulse rounded-md border-2 blur-sm ${c.border}`}></div>
+                        <div className={`absolute inset-0 rounded-md border ${c.borderSolid}`}></div>
+                        <span className={`relative z-10 text-xs font-black tracking-widest md:text-2xl ${c.text} ${c.glow}`}>
+                            ON AIR
+                        </span>
                     </div>
-                )}
+
+                    <div className="relative">
+                        <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 duration-1000 ${c.ping}`}></span>
+                        <img
+                            src="/airtime-logo.png"
+                            alt="Broadcasting"
+                            className={`relative z-10 h-12 w-12 object-contain ${c.logoGlow}`}
+                        />
+                    </div>
+                </div>
             </div>
 
             <div className="z-10 mt-auto">
@@ -188,13 +188,15 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
                     neither the broadcast button nor the rest of the page. */}
                 <div className={`flex min-h-[50px] items-center border-t border-muted pt-3 ${isTransmitting ? '' : 'invisible'}`}>
                     <div className={`flex w-full items-center justify-between ${isTransmitting ? 'animate-slide-up' : ''}`}>
-                        <div className="flex items-center gap-2">
-                            <div className={`rounded p-2 ${c.iconBg}`}>
+                        {/* Phones drop the tower and step the text down, so a five-letter
+                            service with an offset still fits beside the countdown. */}
+                        <div className="flex min-w-0 items-center gap-2">
+                            <div className={`hidden rounded p-2 sm:block ${c.iconBg}`}>
                                 <RadioTower size={32} />
                             </div>
                             <div>
                                 <div className="text-[12px] font-bold tracking-wider text-muted-foreground uppercase">Transmitting</div>
-                                <div className="flex items-center gap-2 text-2xl font-bold text-foreground">
+                                <div className="flex items-center gap-2 text-xl font-bold text-foreground sm:text-2xl">
                                     {serviceName}
                                     {timeTesterEnabled && (
                                         <Badge variant="testing" className="mt-0.5 ml-1 rounded-md border px-1.5 py-0 text-[9px] font-bold tracking-widest uppercase">
@@ -223,9 +225,9 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
                             </div>
                         </div>
 
-                        <div className="text-right">
+                        <div className="shrink-0 text-right">
                             <div className="text-[12px] font-bold tracking-wider text-muted-foreground uppercase">Remaining</div>
-                            <div className={`mt-0.5 font-mono text-3xl leading-none font-bold drop-shadow-md ${c.countdown}`}>
+                            <div className={`mt-0.5 font-mono text-xl leading-none font-bold drop-shadow-md min-[380px]:text-2xl sm:text-3xl ${c.countdown}`}>
                                 {formatCountdown(countdown)}
                             </div>
                         </div>

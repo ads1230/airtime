@@ -47,8 +47,6 @@ export function SystemControlPanel({
 }: SystemControlPanelProps) {
     return (
         <div className="space-y-2">
-            <h3 className="text-lg font-semibold text-card-foreground">System Control</h3>
-
             <div className={ROW_CLASS}>
                 <div className="flex items-center gap-2.5">
                     <div className={`rounded-full p-1.5 ${ledsEnabled ? 'bg-success/20 text-success' : 'bg-secondary text-muted-foreground'}`}>

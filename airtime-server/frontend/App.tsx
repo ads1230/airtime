@@ -11,7 +11,7 @@ import { useDashboardData } from './hooks/useDashboardData';
 import { useSystemUpdate } from './hooks/useSystemUpdate';
 import { useUiConfig } from './hooks/useUiConfig';
 import { useBroadcastControl } from './hooks/useBroadcastControl';
-import { BroadcastActions } from './components/control/BroadcastPanel';
+import { BroadcastPanel } from './components/control/BroadcastPanel';
 import { ThemePicker } from './components/ThemePicker';
 import { Button } from './components/ui/button';
 import { api } from './services/api';
@@ -166,19 +166,22 @@ It stays on ${status?.version ?? 'the current build'} until a stable release is 
               radioConfig={radioConfig}
               timeTesterEnabled={timeTesterEnabled}
               actions={
-                <BroadcastActions
+                <BroadcastPanel
+                  standards={broadcast.standards}
+                  standard={broadcast.settings.standard}
                   duration={broadcast.settings.duration}
                   isTransmitting={isTransmitting}
+                  activeStandard={status?.services.txtempus_service}
                   activeDuration={status?.services.txtempus_duration}
                   busy={broadcast.busy}
-                  onDurationChange={(duration) => broadcast.settings.saveDefaults(broadcast.settings.standard, duration)}
+                  onChange={broadcast.settings.saveDefaults}
                   onToggleBroadcast={broadcast.toggle}
                 />
               }
             />
           </div>
 
-          <div className="order-2 lg:col-span-5 lg:row-span-2 h-full">
+          <div className="order-2 lg:col-span-5">
             <ControlWidget
               radioConfig={radioConfig}
               settings={broadcast.settings}
@@ -188,11 +191,10 @@ It stays on ${status?.version ?? 'the current build'} until a stable release is 
               onBroadcastStart={() => setTimeout(refreshStatus, 1000)}
               onCheckUpdates={() => update.check(true)}
               isTransmitting={isTransmitting}
-              activeService={status?.services.txtempus_service}
             />
           </div>
 
-          <div className="order-3 lg:col-span-7">
+          <div className="order-3 lg:col-span-12">
             <PerformanceWidget metrics={metrics} status={status} />
           </div>
 
