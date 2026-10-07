@@ -3,6 +3,7 @@ import { Card } from './Card';
 import { Badge } from './ui/badge';
 import { SystemStatus, RadioConfig } from '../types';
 import { RadioTower } from 'lucide-react';
+import { formatUtcOffset, parsePiClock, piWallClock } from './piClock';
 
 const formatTimeAgo = (seconds: number): string => {
     if (seconds < 0) return '--';
@@ -21,14 +22,17 @@ interface ClockWidgetProps {
 export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, timeTesterEnabled = false }) => {
     const [displayTime, setDisplayTime] = useState<Date>(new Date());
     const [serverOffset, setServerOffset] = useState<number>(0);
+    const [piUtcOffset, setPiUtcOffset] = useState<number | null>(null);
     const [initDone, setInitDone] = useState(false);
     const [countdown, setCountdown] = useState<number>(0);
 
     useEffect(() => {
         if (status?.system_time) {
-            const serverDate = new Date(status.system_time);
-            const localDate = new Date();
-            setServerOffset(serverDate.getTime() - localDate.getTime());
+            const clock = parsePiClock(status.system_time);
+            if (clock) {
+                setServerOffset(clock.instantMs - Date.now());
+                setPiUtcOffset(clock.utcOffsetMinutes);
+            }
             if (!initDone) setInitDone(true);
         }
     }, [status]);
@@ -49,13 +53,18 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
         }
     }, [status]);
 
+    // Both take a piWallClock date, which is only correct read in UTC.
     const formatTime = (date: Date) => {
-        return date.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        return date.toLocaleTimeString('en-US', { timeZone: 'UTC', hourCycle: 'h23', hour: '2-digit', minute: '2-digit', second: '2-digit' });
     };
 
     const formatDate = (date: Date) => {
-        return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        return date.toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     };
+
+    const piTime = piUtcOffset === null ? null : piWallClock(displayTime.getTime(), piUtcOffset);
+    const deviceUtcOffset = -displayTime.getTimezoneOffset();
+    const zoneDiffers = piUtcOffset !== null && piUtcOffset !== deviceUtcOffset;
 
     const formatCountdown = (secs: number) => {
         const h = Math.floor(secs / 3600);
@@ -111,11 +120,16 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
             <div className="z-10 mb-3 flex items-start justify-between">
                 <div>
                     <div className="mb-1 font-mono text-4xl leading-none font-bold tracking-tight text-heading md:text-5xl">
-                        {formatTime(displayTime)}
+                        {piTime ? formatTime(piTime) : '--:--:--'}
                     </div>
-                    <div className="text-xs font-medium text-muted-foreground">
-                        {formatDate(displayTime)}
+                    <div className="min-h-4 text-xs font-medium text-muted-foreground">
+                        {piTime && piUtcOffset !== null && `${formatDate(piTime)} · ${formatUtcOffset(piUtcOffset)}`}
                     </div>
+                    {zoneDiffers && (
+                        <div className="mt-0.5 text-[11px] font-medium text-warning">
+                            Time zone differs from this device ({formatUtcOffset(deviceUtcOffset)})
+                        </div>
+                    )}
                 </div>
 
                 {isTransmitting && (

@@ -1,4 +1,5 @@
 import { CronJob, SystemStatus } from '../../types';
+import { parsePiClock, piWallClock } from '../piClock';
 
 export const DURATION_OPTIONS = [
     { label: '10 min', value: 10 },
@@ -22,8 +23,11 @@ export function isScheduleLive(job: CronJob, status: SystemStatus | null): boole
     if (!status.services.txtempus_started_at) return false;
 
     try {
-        const startedAt = new Date(status.services.txtempus_started_at);
-        const startedMinutes = startedAt.getHours() * 60 + startedAt.getMinutes();
+        // Schedules fire on the Pi's clock, so the start is read there too.
+        const started = parsePiClock(status.services.txtempus_started_at);
+        if (!started) return false;
+        const startedAt = piWallClock(started.instantMs, started.utcOffsetMinutes);
+        const startedMinutes = startedAt.getUTCHours() * 60 + startedAt.getUTCMinutes();
         const [hours, minutes] = job.friendly_time.split(':').map(Number);
         return Math.abs(startedMinutes - (hours * 60 + minutes)) <= 1;
     } catch {
