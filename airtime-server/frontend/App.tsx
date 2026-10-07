@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ClockWidget } from './components/ClockWidget';
 import { ControlWidget } from './components/ControlWidget';
 import { ScheduleWidget } from './components/ScheduleWidget';
@@ -14,8 +14,7 @@ import { useBroadcastControl } from './hooks/useBroadcastControl';
 import { BroadcastPanel } from './components/control/BroadcastPanel';
 import { ThemePicker } from './components/ThemePicker';
 import { Button } from './components/ui/button';
-import { api } from './services/api';
-import { RadioTower, Github, AlertTriangle, RefreshCw, FlaskConical } from 'lucide-react';
+import { RadioTower, Github, AlertTriangle, RefreshCw } from 'lucide-react';
 
 function App() {
   const { status, metrics, refreshStatus } = useSystemStatus();
@@ -24,9 +23,6 @@ function App() {
   const ui = useUiConfig();
 
   const [timeTesterEnabled, setTimeTesterEnabled] = useState(false);
-  const [betaEnabled, setBetaEnabled] = useState(false);
-  const [confirmBeta, setConfirmBeta] = useState(false);
-  const [confirmStable, setConfirmStable] = useState(false);
 
   const isTransmitting = !!status?.services.txtempus_running;
   const broadcast = useBroadcastControl(radioConfig, isTransmitting, {
@@ -37,24 +33,6 @@ function App() {
       refresh();
     },
   });
-
-  useEffect(() => {
-    api.getReleaseChannel()
-      .then(({ channel }) => setBetaEnabled(channel === 'beta'))
-      .catch((e) => console.error('Could not read the release channel', e));
-  }, []);
-
-  const applyChannel = async (channel: 'stable' | 'beta') => {
-    setConfirmBeta(false);
-    setConfirmStable(false);
-    try {
-      await api.setReleaseChannel(channel);
-      setBetaEnabled(channel === 'beta');
-      update.check(true);
-    } catch (e) {
-      console.error('Could not change the release channel', e);
-    }
-  };
 
   if (loading) {
     return (
@@ -95,30 +73,6 @@ Your schedules and settings are kept.`}
         confirmText="Update Now"
       />
 
-      <ConfirmModal
-        isOpen={confirmBeta}
-        title="Enable Beta Releases?"
-        message={`This install will be offered beta builds, which are published straight from development and may be unstable.
-
-You can switch back to stable at any time.`}
-        type="info"
-        onConfirm={() => applyChannel('beta')}
-        onClose={() => setConfirmBeta(false)}
-        confirmText="Enable"
-      />
-
-      <ConfirmModal
-        isOpen={confirmStable}
-        title="Switch Back to Stable?"
-        message={`This install will only be offered stable releases from now on.
-
-It stays on ${status?.version ?? 'the current build'} until a stable release is newer than it, so nothing is downgraded or reinstalled right now.`}
-        type="info"
-        onConfirm={() => applyChannel('stable')}
-        onClose={() => setConfirmStable(false)}
-        confirmText="Switch to Stable"
-      />
-
       {update.installing && (
         <RestartOverlay
           title="Installing Update"
@@ -139,23 +93,16 @@ It stays on ${status?.version ?? 'the current build'} until a stable release is 
 
           <div className="flex items-center gap-3">
             <ThemePicker theme={ui.theme} themes={ui.availableThemes} onSelect={ui.setTheme} />
-            <a href="https://airtime.diy/" target="_blank" rel="noreferrer" className="font-mono text-xs text-subtle-foreground transition-colors hover:text-foreground">
-              Website
-            </a>
-            <a href="https://github.com/ads1230/airtime" target="_blank" rel="noreferrer" className="text-subtle-foreground transition-colors hover:text-foreground">
+            <a
+              href="https://github.com/ads1230/airtime"
+              target="_blank"
+              rel="noreferrer"
+              title="ads1230/airtime on GitHub"
+              aria-label="ads1230/airtime on GitHub"
+              className="text-subtle-foreground transition-colors hover:text-foreground"
+            >
               <Github size={20} />
             </a>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => (betaEnabled ? setConfirmStable(true) : setConfirmBeta(true))}
-              className={betaEnabled
-                ? 'border border-testing/50 bg-testing/10 text-testing-bright hover:bg-testing/20'
-                : 'text-faint-foreground hover:text-muted-foreground'}
-              title={betaEnabled ? 'Beta releases enabled' : 'Enable beta releases'}
-            >
-              <FlaskConical size={18} />
-            </Button>
           </div>
         </header>
 

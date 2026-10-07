@@ -86,7 +86,6 @@ The Airtime dashboard provides an easy way to interact with the Airtime pi, and 
     - **Time Zone**: Set the Pi's time zone. AirTime broadcasts the Pi's local time, so this decides what your watch shows. Applying it restarts AirTime.
     - **Time Server**: Choose the NTP servers the Pi sets its clock from, such as NPL's atomic-clock servers in the UK. Installs from before this option need a one-time command, which the dashboard shows.
     - **Auto-Update**: Installs the latest GitHub release directly from the UI, verified by checksum.
-    - **Beta Releases**: The flask icon in the header opts this Pi into beta builds, published from every change to the development branch. Switch back to stable at any time; your Pi stays on the build it is running rather than being downgraded.
     - **System Restart**: Restart the AirTime service.
     - **Pi Reboot**: Reboot the Pi directly from the dashboard UI.
 
