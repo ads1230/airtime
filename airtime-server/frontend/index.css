@@ -74,9 +74,17 @@
   --danger: #ef4444;
   --danger-strong: #dc2626;
 
-  /* secondary accent — the RAM meter and the AirTime restart control */
+  /* secondary accent — the AirTime restart control */
   --accent-alt: #c084fc;
   --accent-alt-strong: #a855f7;
+
+  /*
+    CPU and RAM rings. Chosen as a pair against --card: each needs 3:1 contrast
+    on it, and the two must stay apart for colour-blind readers. Check a new
+    theme's pair with a palette validator rather than by eye.
+  */
+  --meter-cpu: #0ea5c4;
+  --meter-ram: #a855f7;
 
   /* Derived — themes do not set these. Glows follow whatever colour is above. */
   --glow-on-air: 0 0 12px color-mix(in srgb, var(--on-air-bright) 90%, transparent);
@@ -136,6 +144,8 @@
   --color-danger-strong: var(--danger-strong);
   --color-accent-alt: var(--accent-alt);
   --color-accent-alt-strong: var(--accent-alt-strong);
+  --color-meter-cpu: var(--meter-cpu);
+  --color-meter-ram: var(--meter-ram);
 
   --animate-slide-in-right: slide-in-right 0.3s ease-out;
   --animate-fade-in: fade-in 0.2s ease-out;

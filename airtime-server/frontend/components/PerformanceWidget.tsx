@@ -16,6 +16,56 @@ interface Props {
     status: SystemStatus | null;
 }
 
+interface UsageRingProps {
+    icon: React.ComponentType<{ size?: number; className?: string }>;
+    label: string;
+    percent: number;
+    // A text colour class; the ring and the icon draw in it.
+    colorClass: string;
+}
+
+// A percentage as a large ring: the arc fills clockwise from twelve o'clock over a
+// faint track in the same colour, with the value and its label in the middle.
+function UsageRing({ icon: Icon, label, percent, colorClass }: UsageRingProps) {
+    const value = Math.min(100, Math.max(0, percent));
+    return (
+        <div
+            role="meter"
+            aria-label={`${label} usage`}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(value)}
+            aria-valuetext={`${value.toFixed(1)}%`}
+            className="relative aspect-square w-full max-w-[152px]"
+        >
+            <svg viewBox="0 0 100 100" className={`absolute inset-0 h-full w-full ${colorClass}`} aria-hidden="true">
+                <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" strokeWidth="8" opacity="0.18" />
+                {/* pathLength 100 makes the dash length the percentage. Left out at zero,
+                    where its round caps would still draw a dot. */}
+                {value > 0 && (
+                    <circle
+                        cx="50" cy="50" r="44"
+                        fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round"
+                        pathLength={100}
+                        strokeDasharray={`${value} 100`}
+                        transform="rotate(-90 50 50)"
+                        className="transition-[stroke-dasharray] duration-500 ease-out"
+                    />
+                )}
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="font-mono font-bold text-foreground">
+                    <span className="text-3xl">{value.toFixed(1)}</span>
+                    <span className="text-base">%</span>
+                </div>
+                <div className="mt-0.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase">
+                    <Icon size={14} className={colorClass} /> {label}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export function PerformanceWidget({ metrics, status }: Props) {
     if (!metrics) {
         return (
@@ -34,38 +84,6 @@ export function PerformanceWidget({ metrics, status }: Props) {
         return `${days}d ${hours}h ${minutes}m`;
     };
 
-    const TopStat = ({
-        icon: Icon,
-        label,
-        valueText,
-        percent,
-        colorClass,
-        bgClass
-    }: {
-        icon: any,
-        label: string,
-        valueText: React.ReactNode,
-        percent: number,
-        colorClass: string,
-        bgClass: string
-    }) => (
-        <div className="flex flex-col justify-end">
-            <div className="mb-2 flex items-end justify-between">
-                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase">
-                    <Icon size={14} className={colorClass} /> {label}
-                </div>
-                <div className={`font-mono text-sm font-bold ${colorClass}`}>
-                    {valueText}
-                </div>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                    className={`h-1.5 rounded-full transition-all duration-500 ${bgClass}`}
-                    style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
-                />
-            </div>
-        </div>
-    );
 
     const getTempColor = (temp: number) => {
         if (temp < 50) return 'text-success';
@@ -75,24 +93,12 @@ export function PerformanceWidget({ metrics, status }: Props) {
 
     return (
         <Card title="System Statistics" className="h-full">
-            <div className="space-y-6">
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <TopStat
-                        icon={Cpu}
-                        label="CPU"
-                        valueText={`${metrics.cpu.percent.toFixed(1)}%`}
-                        percent={metrics.cpu.percent}
-                        colorClass="text-on-air-bright"
-                        bgClass="bg-on-air"
-                    />
-                    <TopStat
-                        icon={CircuitBoard}
-                        label="RAM"
-                        valueText={`${metrics.memory.percent.toFixed(1)}%`}
-                        percent={metrics.memory.percent}
-                        colorClass="text-accent-alt"
-                        bgClass="bg-accent-alt-strong"
-                    />
+            {/* Beside the taller System Control card, the readings drop to the foot so
+                the spare height sits between them and the rings. */}
+            <div className="flex h-full flex-col justify-between gap-6">
+                <div className="grid grid-cols-2 justify-items-center gap-4">
+                    <UsageRing icon={Cpu} label="CPU" percent={metrics.cpu.percent} colorClass="text-meter-cpu" />
+                    <UsageRing icon={CircuitBoard} label="RAM" percent={metrics.memory.percent} colorClass="text-meter-ram" />
                 </div>
 
                 <div className="grid grid-cols-4 gap-4">
