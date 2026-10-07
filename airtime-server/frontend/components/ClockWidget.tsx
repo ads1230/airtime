@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Card } from './Card';
 import { Badge } from './ui/badge';
 import { RadioConfig, SystemStatus } from '../types';
-import { RadioTower } from 'lucide-react';
 import { fixedTimeShiftMs, formatOffset, formatUtcOffset, formatWallTime } from './piClock';
 import { usePiClock } from '../hooks/usePiClock';
 
@@ -65,10 +64,6 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
     const isFixedTimeBroadcast = !!fixedTime && !timeTesterEnabled;
 
     const offset = isTransmitting && !fixedTime ? (services?.txtempus_offset || 0) : 0;
-    const offsetHours = Math.floor(Math.abs(offset) / 60);
-    const offsetMinutes = Math.abs(offset) % 60;
-    const offsetSign = offset >= 0 ? 1 : -1;
-    const hasOffset = offset !== 0;
 
     // Between broadcasts, what the next one will carry, decided the way the daemon builds its command.
     const fixedConfigured = /^\d{1,2}:\d{2}$/.test(radioConfig?.default_fixed_time || '') && radioConfig?.default_time_mode === 'fixed_time'
@@ -112,24 +107,31 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
     // else is a normal on-air Broadcast.
     const useTesting = timeTesterEnabled || isFixedTimeBroadcast;
     const c = useTesting ? {
-        border: 'border-testing/50',
-        borderSolid: 'border-testing/80',
-        text: 'text-testing',
-        glow: 'glow-testing',
         ping: 'bg-testing-bright',
         logoGlow: 'glow-logo-testing',
-        iconBg: 'bg-testing/10 text-testing-bright',
         countdown: 'text-testing-bright',
     } : {
-        border: 'border-on-air/50',
-        borderSolid: 'border-on-air/80',
-        text: 'text-on-air',
-        glow: 'glow-on-air',
         ping: 'bg-on-air-bright',
         logoGlow: 'glow-logo-on-air',
-        iconBg: 'bg-on-air/10 text-on-air-bright',
         countdown: 'text-on-air-bright',
     };
+
+    // What is on air: beside the logo on a wide screen, in the strip on a phone,
+    // where there is no room beside the logo. The time mode is not repeated here;
+    // the label over the big clock already gives the offset or fixed time.
+    const transmitting = (alignRight: boolean) => (
+        <>
+            <div className="text-[12px] font-bold tracking-wider text-muted-foreground uppercase">Transmitting</div>
+            <div className={`flex items-center gap-2 text-2xl font-bold text-foreground ${alignRight ? 'justify-end' : ''}`}>
+                {serviceName}
+                {timeTesterEnabled && (
+                    <Badge variant="testing" className="mt-0.5 rounded-md border px-1.5 py-0 text-[9px] font-bold tracking-widest uppercase">
+                        Testing
+                    </Badge>
+                )}
+            </div>
+        </>
+    );
 
     return (
         <Card className="group relative h-full overflow-hidden">
@@ -164,13 +166,7 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
                 {/* Also held in place between broadcasts: on a narrow phone it takes width
                     from the date beside it, which must wrap the same way on and off air. */}
                 <div className={`flex shrink-0 items-center gap-6 pt-2 pr-4 ${isTransmitting ? 'animate-fade-in' : 'invisible'}`}>
-                    <div className="relative hidden px-2 py-1 md:block md:px-4 md:py-1.5">
-                        <div className={`absolute inset-0 animate-pulse rounded-md border-2 blur-sm ${c.border}`}></div>
-                        <div className={`absolute inset-0 rounded-md border ${c.borderSolid}`}></div>
-                        <span className={`relative z-10 text-xs font-black tracking-widest md:text-2xl ${c.text} ${c.glow}`}>
-                            ON AIR
-                        </span>
-                    </div>
+                    <div className="hidden text-right md:block">{transmitting(true)}</div>
 
                     <div className="relative">
                         <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 duration-1000 ${c.ping}`}></span>
@@ -187,47 +183,12 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
                 {/* Kept in place but hidden between broadcasts, so starting one moves
                     neither the broadcast button nor the rest of the page. */}
                 <div className={`flex min-h-[50px] items-center border-t border-muted pt-3 ${isTransmitting ? '' : 'invisible'}`}>
-                    <div className={`flex w-full items-center justify-between ${isTransmitting ? 'animate-slide-up' : ''}`}>
-                        {/* Phones drop the tower and step the text down, so a five-letter
-                            service with an offset still fits beside the countdown. */}
-                        <div className="flex min-w-0 items-center gap-2">
-                            <div className={`hidden rounded p-2 sm:block ${c.iconBg}`}>
-                                <RadioTower size={32} />
-                            </div>
-                            <div>
-                                <div className="text-[12px] font-bold tracking-wider text-muted-foreground uppercase">Transmitting</div>
-                                <div className="flex items-center gap-2 text-xl font-bold text-foreground sm:text-2xl">
-                                    {serviceName}
-                                    {timeTesterEnabled && (
-                                        <Badge variant="testing" className="mt-0.5 ml-1 rounded-md border px-1.5 py-0 text-[9px] font-bold tracking-widest uppercase">
-                                            Testing
-                                        </Badge>
-                                    )}
-                                    {isFixedTimeBroadcast && (
-                                        <Badge variant="testing" className="ml-1 rounded-md border px-2 py-0 font-mono text-[12px] font-bold">
-                                            FIXED {fixedTime}
-                                        </Badge>
-                                    )}
-                                    {!timeTesterEnabled && !isFixedTimeBroadcast && !hasOffset && (
-                                        <Badge variant="onAir" className="ml-1 rounded-md border px-2 py-0 font-mono text-[12px] font-bold">
-                                            NOW
-                                        </Badge>
-                                    )}
-                                    {hasOffset && !timeTesterEnabled && !isFixedTimeBroadcast && (
-                                        <Badge
-                                            variant={offsetSign > 0 ? 'offsetPositive' : 'offsetNegative'}
-                                            className="ml-1 rounded-md border px-2 py-0 font-mono text-[12px] font-bold"
-                                        >
-                                            NOW {offsetSign > 0 ? '+' : '-'}{offsetHours > 0 ? `${offsetHours}h ` : ''}{offsetMinutes}m
-                                        </Badge>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
+                    <div className={`flex w-full items-center ${isTransmitting ? 'animate-slide-up' : ''}`}>
+                        <div className="md:hidden">{transmitting(false)}</div>
 
-                        <div className="shrink-0 text-right">
+                        <div className="ml-auto shrink-0 text-right">
                             <div className="text-[12px] font-bold tracking-wider text-muted-foreground uppercase">Remaining</div>
-                            <div className={`mt-0.5 font-mono text-xl leading-none font-bold drop-shadow-md min-[380px]:text-2xl sm:text-3xl ${c.countdown}`}>
+                            <div className={`mt-0.5 font-mono text-3xl leading-none font-bold drop-shadow-md ${c.countdown}`}>
                                 {formatCountdown(countdown)}
                             </div>
                         </div>
