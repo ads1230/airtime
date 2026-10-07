@@ -4,31 +4,29 @@ import { RadioConfig, TimeZoneInfo } from '../types';
 import { api } from '../services/api';
 import { ConfirmModal, ModalType } from './ConfirmModal';
 import { RestartOverlay } from './RestartOverlay';
-import { BroadcastPanel } from './control/BroadcastPanel';
+import { ServicePicker } from './control/BroadcastPanel';
 import { SystemControlPanel } from './control/SystemControlPanel';
 import { TimeSettingsModal } from './control/TimeSettingsModal';
 import { TimeTesterModal } from './control/TimeTesterModal';
 import { TimeZoneModal } from './control/TimeZoneModal';
 import { TimeServerModal, describeTimeServers } from './control/TimeServerModal';
 import { useTimeServers } from '../hooks/useTimeServers';
-import { useBroadcastSettings } from '../hooks/useBroadcastSettings';
-import { useTimeTester } from '../hooks/useTimeTester';
+import { BroadcastSettings, TimeTester } from '../hooks/useBroadcastControl';
 import { useSystemActions } from '../hooks/useSystemActions';
 
 const FALLBACK_STANDARDS = ['DCF77', 'WWVB', 'MSF', 'JJY40', 'JJY60'];
 
 interface ControlWidgetProps {
     radioConfig: RadioConfig | null;
+    // Shared with the clock card, which holds the duration and the broadcast button.
+    settings: BroadcastSettings;
+    tester: TimeTester;
     systemTime?: string;
     systemTimeReceivedAt?: number;
     onBroadcastStart: () => void;
     onCheckUpdates: () => void;
-    onSettingsSaved?: () => void;
     isTransmitting?: boolean;
     activeService?: string | null;
-    activeDuration?: number | null;
-    remainingSeconds?: number;
-    onTimeTesterChange?: (enabled: boolean, service: string) => void;
 }
 
 interface Prompt {
@@ -41,22 +39,18 @@ interface Prompt {
 
 export function ControlWidget({
     radioConfig,
+    settings,
+    tester,
     systemTime,
     systemTimeReceivedAt,
     onBroadcastStart,
     onCheckUpdates,
-    onSettingsSaved,
     isTransmitting = false,
     activeService,
-    activeDuration,
-    onTimeTesterChange,
 }: ControlWidgetProps) {
-    const settings = useBroadcastSettings(radioConfig, onSettingsSaved);
-    const tester = useTimeTester(onTimeTesterChange);
     const system = useSystemActions();
 
     const [ledsEnabled, setLedsEnabled] = useState(true);
-    const [busy, setBusy] = useState(false);
     const [showTimeSettings, setShowTimeSettings] = useState(false);
     const [showTimeTester, setShowTimeTester] = useState(false);
     const [timeZone, setTimeZone] = useState<TimeZoneInfo | null>(null);
@@ -79,26 +73,6 @@ export function ControlWidget({
         } catch (e) {
             console.error('Failed to change the time zone', e);
             setPrompt({ title: 'Error', message: 'Failed to change the time zone.', type: 'danger' });
-        }
-    };
-
-    const toggleBroadcast = async () => {
-        setBusy(true);
-        try {
-            if (!isTransmitting) {
-                await api.transmit({ service: settings.standard, duration: settings.duration });
-            } else if (tester.enabled) {
-                // The tester has its own stop path, which restores the schedules
-                // it suspended.
-                await tester.stop();
-            } else {
-                await api.stopTransmit();
-            }
-            onBroadcastStart();
-        } catch (e) {
-            console.error('Broadcast control failed', e);
-        } finally {
-            setBusy(false);
         }
     };
 
@@ -133,16 +107,12 @@ export function ControlWidget({
         <>
             <Card title="Broadcast Control" className="h-full">
                 <div className="space-y-1 -mt-2">
-                    <BroadcastPanel
+                    <ServicePicker
                         standards={standards}
                         standard={settings.standard}
-                        duration={settings.duration}
                         isTransmitting={isTransmitting}
                         activeStandard={activeService}
-                        activeDuration={activeDuration}
-                        busy={busy}
-                        onChange={settings.saveDefaults}
-                        onToggleBroadcast={toggleBroadcast}
+                        onChange={(standard) => settings.saveDefaults(standard, settings.duration)}
                     />
 
                     <div className="my-2 border-t border-muted/50" />

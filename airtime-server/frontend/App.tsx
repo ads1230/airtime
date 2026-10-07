@@ -10,6 +10,8 @@ import { useSystemStatus } from './hooks/useSystemStatus';
 import { useDashboardData } from './hooks/useDashboardData';
 import { useSystemUpdate } from './hooks/useSystemUpdate';
 import { useUiConfig } from './hooks/useUiConfig';
+import { useBroadcastControl } from './hooks/useBroadcastControl';
+import { BroadcastActions } from './components/control/BroadcastPanel';
 import { ThemePicker } from './components/ThemePicker';
 import { Button } from './components/ui/button';
 import { api } from './services/api';
@@ -25,6 +27,16 @@ function App() {
   const [betaEnabled, setBetaEnabled] = useState(false);
   const [confirmBeta, setConfirmBeta] = useState(false);
   const [confirmStable, setConfirmStable] = useState(false);
+
+  const isTransmitting = !!status?.services.txtempus_running;
+  const broadcast = useBroadcastControl(radioConfig, isTransmitting, {
+    onSettingsSaved: refresh,
+    onToggled: () => setTimeout(refreshStatus, 1000),
+    onTimeTesterChange: (enabled) => {
+      setTimeTesterEnabled(enabled);
+      refresh();
+    },
+  });
 
   useEffect(() => {
     api.getReleaseChannel()
@@ -153,25 +165,30 @@ It stays on ${status?.version ?? 'the current build'} until a stable release is 
               status={status}
               radioConfig={radioConfig}
               timeTesterEnabled={timeTesterEnabled}
+              actions={
+                <BroadcastActions
+                  duration={broadcast.settings.duration}
+                  isTransmitting={isTransmitting}
+                  activeDuration={status?.services.txtempus_duration}
+                  busy={broadcast.busy}
+                  onDurationChange={(duration) => broadcast.settings.saveDefaults(broadcast.settings.standard, duration)}
+                  onToggleBroadcast={broadcast.toggle}
+                />
+              }
             />
           </div>
 
           <div className="order-2 lg:col-span-5 lg:row-span-2 h-full">
             <ControlWidget
               radioConfig={radioConfig}
+              settings={broadcast.settings}
+              tester={broadcast.tester}
               systemTime={status?.system_time}
               systemTimeReceivedAt={status?.received_at}
               onBroadcastStart={() => setTimeout(refreshStatus, 1000)}
               onCheckUpdates={() => update.check(true)}
-              onSettingsSaved={refresh}
-              isTransmitting={status?.services.txtempus_running}
+              isTransmitting={isTransmitting}
               activeService={status?.services.txtempus_service}
-              activeDuration={status?.services.txtempus_duration}
-              remainingSeconds={status?.services.txtempus_remaining_seconds}
-              onTimeTesterChange={(enabled) => {
-                setTimeTesterEnabled(enabled);
-                refresh();
-              }}
             />
           </div>
 

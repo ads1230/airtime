@@ -18,9 +18,11 @@ interface ClockWidgetProps {
     status: SystemStatus | null;
     radioConfig?: RadioConfig | null;
     timeTesterEnabled?: boolean;
+    // The duration and the broadcast button, at the foot of the card.
+    actions?: React.ReactNode;
 }
 
-export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, timeTesterEnabled = false }) => {
+export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, timeTesterEnabled = false, actions }) => {
     const { instant: displayTime, utcOffset: piUtcOffset, piTime } = usePiClock(status?.system_time, status?.received_at);
     const [countdown, setCountdown] = useState<number>(0);
 
@@ -131,7 +133,7 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
 
     return (
         <Card className="group relative h-full overflow-hidden">
-            <div className="flex h-full flex-col justify-between">
+            <div className="flex h-full flex-col">
             <div className="z-10 mb-3 flex items-start justify-between">
                 <div>
                     {broadcastLabel && (
@@ -181,51 +183,56 @@ export const ClockWidget: React.FC<ClockWidgetProps> = ({ status, radioConfig, t
                 )}
             </div>
 
-            {/* Kept in place but hidden between broadcasts, so starting one doesn't push the page down. */}
-            <div className={`z-10 flex min-h-[50px] items-center border-t border-muted pt-3 ${isTransmitting ? '' : 'invisible'}`}>
-                <div className={`flex w-full items-center justify-between ${isTransmitting ? 'animate-slide-up' : ''}`}>
-                    <div className="flex items-center gap-2">
-                        <div className={`rounded p-2 ${c.iconBg}`}>
-                            <RadioTower size={32} />
+            <div className="z-10 mt-auto">
+                {/* Kept in place but hidden between broadcasts, so starting one moves
+                    neither the broadcast button nor the rest of the page. */}
+                <div className={`flex min-h-[50px] items-center border-t border-muted pt-3 ${isTransmitting ? '' : 'invisible'}`}>
+                    <div className={`flex w-full items-center justify-between ${isTransmitting ? 'animate-slide-up' : ''}`}>
+                        <div className="flex items-center gap-2">
+                            <div className={`rounded p-2 ${c.iconBg}`}>
+                                <RadioTower size={32} />
+                            </div>
+                            <div>
+                                <div className="text-[12px] font-bold tracking-wider text-muted-foreground uppercase">Transmitting</div>
+                                <div className="flex items-center gap-2 text-2xl font-bold text-foreground">
+                                    {serviceName}
+                                    {timeTesterEnabled && (
+                                        <Badge variant="testing" className="mt-0.5 ml-1 rounded-md border px-1.5 py-0 text-[9px] font-bold tracking-widest uppercase">
+                                            Testing
+                                        </Badge>
+                                    )}
+                                    {isFixedTimeBroadcast && (
+                                        <Badge variant="testing" className="ml-1 rounded-md border px-2 py-0 font-mono text-[12px] font-bold">
+                                            FIXED {fixedTime}
+                                        </Badge>
+                                    )}
+                                    {!timeTesterEnabled && !isFixedTimeBroadcast && !hasOffset && (
+                                        <Badge variant="onAir" className="ml-1 rounded-md border px-2 py-0 font-mono text-[12px] font-bold">
+                                            NOW
+                                        </Badge>
+                                    )}
+                                    {hasOffset && !timeTesterEnabled && !isFixedTimeBroadcast && (
+                                        <Badge
+                                            variant={offsetSign > 0 ? 'offsetPositive' : 'offsetNegative'}
+                                            className="ml-1 rounded-md border px-2 py-0 font-mono text-[12px] font-bold"
+                                        >
+                                            NOW {offsetSign > 0 ? '+' : '-'}{offsetHours > 0 ? `${offsetHours}h ` : ''}{offsetMinutes}m
+                                        </Badge>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <div className="text-[12px] font-bold tracking-wider text-muted-foreground uppercase">Transmitting</div>
-                            <div className="flex items-center gap-2 text-2xl font-bold text-foreground">
-                                {serviceName}
-                                {timeTesterEnabled && (
-                                    <Badge variant="testing" className="mt-0.5 ml-1 rounded-md border px-1.5 py-0 text-[9px] font-bold tracking-widest uppercase">
-                                        Testing
-                                    </Badge>
-                                )}
-                                {isFixedTimeBroadcast && (
-                                    <Badge variant="testing" className="ml-1 rounded-md border px-2 py-0 font-mono text-[12px] font-bold">
-                                        FIXED {fixedTime}
-                                    </Badge>
-                                )}
-                                {!timeTesterEnabled && !isFixedTimeBroadcast && !hasOffset && (
-                                    <Badge variant="onAir" className="ml-1 rounded-md border px-2 py-0 font-mono text-[12px] font-bold">
-                                        NOW
-                                    </Badge>
-                                )}
-                                {hasOffset && !timeTesterEnabled && !isFixedTimeBroadcast && (
-                                    <Badge
-                                        variant={offsetSign > 0 ? 'offsetPositive' : 'offsetNegative'}
-                                        className="ml-1 rounded-md border px-2 py-0 font-mono text-[12px] font-bold"
-                                    >
-                                        NOW {offsetSign > 0 ? '+' : '-'}{offsetHours > 0 ? `${offsetHours}h ` : ''}{offsetMinutes}m
-                                    </Badge>
-                                )}
+
+                        <div className="text-right">
+                            <div className="text-[12px] font-bold tracking-wider text-muted-foreground uppercase">Remaining</div>
+                            <div className={`mt-0.5 font-mono text-3xl leading-none font-bold drop-shadow-md ${c.countdown}`}>
+                                {formatCountdown(countdown)}
                             </div>
                         </div>
                     </div>
-
-                    <div className="text-right">
-                        <div className="text-[12px] font-bold tracking-wider text-muted-foreground uppercase">Remaining</div>
-                        <div className={`mt-0.5 font-mono text-3xl leading-none font-bold drop-shadow-md ${c.countdown}`}>
-                            {formatCountdown(countdown)}
-                        </div>
-                    </div>
                 </div>
+
+                {actions && <div className="mt-3">{actions}</div>}
             </div>
             </div>
         </Card>
