@@ -20,6 +20,7 @@ import (
 	"github.com/aleh11/airtime/internal/metrics"
 	"github.com/aleh11/airtime/internal/scheduler"
 	"github.com/aleh11/airtime/internal/store"
+	"github.com/aleh11/airtime/internal/timezone"
 	"github.com/aleh11/airtime/internal/tlsgen"
 	"github.com/aleh11/airtime/internal/transmit"
 	"github.com/aleh11/airtime/internal/update"
@@ -138,8 +139,9 @@ func run() error {
 				return channel == "beta"
 			},
 		},
-		Version: version,
-		Static:  web.Handler(),
+		TimeZone: timezone.System{},
+		Version:  version,
+		Static:   web.Handler(),
 		RestartService: func() error {
 			return exec.Command("systemctl", "restart", cfg.serviceName).Start()
 		},

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card } from './Card';
-import { RadioConfig } from '../types';
+import { RadioConfig, TimeZoneInfo } from '../types';
 import { api } from '../services/api';
 import { ConfirmModal, ModalType } from './ConfirmModal';
 import { RestartOverlay } from './RestartOverlay';
@@ -8,6 +8,7 @@ import { BroadcastPanel } from './control/BroadcastPanel';
 import { SystemControlPanel } from './control/SystemControlPanel';
 import { TimeSettingsModal } from './control/TimeSettingsModal';
 import { TimeTesterModal } from './control/TimeTesterModal';
+import { TimeZoneModal } from './control/TimeZoneModal';
 import { useBroadcastSettings } from '../hooks/useBroadcastSettings';
 import { useTimeTester } from '../hooks/useTimeTester';
 import { useSystemActions } from '../hooks/useSystemActions';
@@ -52,8 +53,26 @@ export function ControlWidget({
     const [busy, setBusy] = useState(false);
     const [showTimeSettings, setShowTimeSettings] = useState(false);
     const [showTimeTester, setShowTimeTester] = useState(false);
+    const [timeZone, setTimeZone] = useState<TimeZoneInfo | null>(null);
+    const [showTimeZone, setShowTimeZone] = useState(false);
     const [prompt, setPrompt] = useState<Prompt | null>(null);
     const standards = radioConfig?.available_services ?? FALLBACK_STANDARDS;
+
+    useEffect(() => {
+        api.getTimeZone()
+            .then(setTimeZone)
+            .catch((e) => console.error('Could not read the time zone', e));
+    }, []);
+
+    const applyTimeZone = async (zone: string) => {
+        setShowTimeZone(false);
+        try {
+            await system.restartWith(() => api.setTimeZone(zone));
+        } catch (e) {
+            console.error('Failed to change the time zone', e);
+            setPrompt({ title: 'Error', message: 'Failed to change the time zone.', type: 'danger' });
+        }
+    };
 
     const toggleBroadcast = async () => {
         setBusy(true);
@@ -129,6 +148,7 @@ export function ControlWidget({
                         offsetHours={settings.offsetHours}
                         offsetMinutes={settings.offsetMinutes}
                         offsetSign={settings.offsetSign}
+                        timeZone={timeZone?.timezone ?? null}
                         onToggleLeds={toggleLeds}
                         onOpenTimeSettings={() => {
                             if (isTransmitting) {
@@ -140,6 +160,17 @@ export function ControlWidget({
                                 return;
                             }
                             setShowTimeSettings(true);
+                        }}
+                        onOpenTimeZone={() => {
+                            if (isTransmitting) {
+                                setPrompt({
+                                    title: 'Control Locked',
+                                    message: "You can't change the time zone while broadcasting.",
+                                    type: 'warning',
+                                });
+                                return;
+                            }
+                            setShowTimeZone(true);
                         }}
                         onRestartService={() => confirmRestart('service')}
                         onRestartPi={() => confirmRestart('pi')}
@@ -168,6 +199,15 @@ export function ControlWidget({
                         }
                         setPrompt({ title: 'Error', message: 'Failed to save time settings.', type: 'danger' });
                     }}
+                />
+            )}
+
+            {showTimeZone && timeZone && (
+                <TimeZoneModal
+                    current={timeZone.timezone}
+                    zones={timeZone.available}
+                    onSave={applyTimeZone}
+                    onClose={() => setShowTimeZone(false)}
                 />
             )}
 

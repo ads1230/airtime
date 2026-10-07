@@ -45,5 +45,20 @@ export function useSystemActions() {
         }
     };
 
-    return { restarting, restart };
+    // For a request after which the daemon restarts itself, such as a time zone change.
+    const restartWith = async (request: () => Promise<{ restarting: boolean }>): Promise<void> => {
+        setRestarting('service');
+        try {
+            const result = await request();
+            if (!result.restarting) return;
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            if (await waitForDaemon()) {
+                window.location.reload();
+            }
+        } finally {
+            setRestarting(null);
+        }
+    };
+
+    return { restarting, restart, restartWith };
 }

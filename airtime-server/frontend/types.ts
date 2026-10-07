@@ -55,6 +55,11 @@ export interface SystemStatus {
     version?: string;
 }
 
+export interface TimeZoneInfo {
+    timezone: string;
+    available: string[];
+}
+
 export type ReleaseChannel = 'stable' | 'beta';
 
 export interface UpdateInfo {

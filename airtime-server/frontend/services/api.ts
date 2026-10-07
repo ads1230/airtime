@@ -8,6 +8,7 @@ import {
     UiConfig,
     UiConfigInput,
     TransmitRequest,
+    TimeZoneInfo,
     UpdateInfo, ReleaseChannel } from '../types';
 
 const API_BASE = '';
@@ -144,6 +145,21 @@ export const api = {
             body: JSON.stringify(config),
         });
         return handleResponse<{ status: string }>(res);
+    },
+
+    getTimeZone: async (): Promise<TimeZoneInfo> => {
+        const res = await fetch(`${API_BASE}/api/settings/timezone`);
+        return handleResponse<TimeZoneInfo>(res);
+    },
+
+    // The daemon restarts itself after a change, so its schedules follow the new zone.
+    setTimeZone: async (timezone: string): Promise<{ timezone: string; restarting: boolean }> => {
+        const res = await fetch(`${API_BASE}/api/settings/timezone`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ timezone }),
+        });
+        return handleResponse<{ timezone: string; restarting: boolean }>(res);
     },
 
     getTimeTester: async (): Promise<{ enabled: boolean; service: string }> => {

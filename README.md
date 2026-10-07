@@ -83,6 +83,7 @@ The Airtime dashboard provides an easy way to interact with the Airtime pi, and 
 - **Additional Features**: 
     - **Stealth Mode**: Toggle hardware LEDs.
     - **Global Offset**: Apply a time offset to all transmissions (usefull for timezone differences on certain services/watches).
+    - **Time Zone**: Set the Pi's time zone. AirTime broadcasts the Pi's local time, so this decides what your watch shows. Applying it restarts AirTime.
     - **Auto-Update**: Installs the latest GitHub release directly from the UI, verified by checksum.
     - **Beta Releases**: The flask icon in the header opts this Pi into beta builds, published from every change to the development branch. Switch back to stable at any time; your Pi stays on the build it is running rather than being downgraded.
     - **System Restart**: Restart the AirTime service.

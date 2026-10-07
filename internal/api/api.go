@@ -30,14 +30,22 @@ type Updater interface {
 	Apply() error
 }
 
+// TimeZone reads and changes the Pi's time zone. A nil TimeZone disables the endpoints.
+type TimeZone interface {
+	Current() (string, error)
+	Available() ([]string, error)
+	Set(zone string) error
+}
+
 type Deps struct {
-	Store   *store.Store
-	Runner  Broadcaster
-	Metrics MetricsSource
-	Updater Updater
-	Version string
-	Now     func() time.Time
-	Static  http.Handler
+	Store    *store.Store
+	Runner   Broadcaster
+	Metrics  MetricsSource
+	Updater  Updater
+	TimeZone TimeZone
+	Version  string
+	Now      func() time.Time
+	Static   http.Handler
 
 	// RestartService and RebootHost are injected so tests never reboot anything.
 	RestartService func() error
@@ -65,6 +73,8 @@ func New(deps Deps) http.Handler {
 	mux.HandleFunc("POST /api/settings/radio", s.setRadioConfig)
 	mux.HandleFunc("GET /api/settings/ui", s.getUIConfig)
 	mux.HandleFunc("POST /api/settings/ui", s.setUIConfig)
+	mux.HandleFunc("GET /api/settings/timezone", s.getTimeZone)
+	mux.HandleFunc("POST /api/settings/timezone", s.setTimeZone)
 	mux.HandleFunc("POST /api/control/stealth", s.toggleStealth)
 	mux.HandleFunc("POST /api/control/transmit", s.startTransmit)
 	mux.HandleFunc("POST /api/control/stop", s.stopTransmit)

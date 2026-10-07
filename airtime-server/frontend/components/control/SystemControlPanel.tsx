@@ -1,4 +1,4 @@
-import { Clock, RefreshCw, RotateCw, Settings, Zap } from 'lucide-react';
+import { Clock, Globe, RefreshCw, RotateCw, Settings, Zap } from 'lucide-react';
 import { TimeModeBadge } from './TimeModeBadge';
 import { TimeMode } from '../../hooks/useBroadcastSettings';
 import { Button } from '../ui/button';
@@ -13,8 +13,10 @@ interface SystemControlPanelProps {
     offsetHours: number;
     offsetMinutes: number;
     offsetSign: number;
+    timeZone: string | null;
     onToggleLeds: () => void;
     onOpenTimeSettings: () => void;
+    onOpenTimeZone: () => void;
     onRestartService: () => void;
     onRestartPi: () => void;
     onCheckUpdates: () => void;
@@ -31,8 +33,10 @@ export function SystemControlPanel({
     offsetHours,
     offsetMinutes,
     offsetSign,
+    timeZone,
     onToggleLeds,
     onOpenTimeSettings,
+    onOpenTimeZone,
     onRestartService,
     onRestartPi,
     onCheckUpdates,
@@ -79,6 +83,24 @@ export function SystemControlPanel({
                 </div>
                 <Settings size={13} className="text-subtle-foreground" />
             </button>
+
+            {timeZone && (
+                <button
+                    onClick={onOpenTimeZone}
+                    className={`${ROW_CLASS} w-full cursor-pointer text-left transition-colors hover:bg-muted`}
+                >
+                    <div className="flex min-w-0 items-center gap-2.5">
+                        <div className="rounded-full bg-secondary p-1.5 text-on-air-bright">
+                            <Globe size={14} />
+                        </div>
+                        <div className="flex min-w-0 items-center gap-2 text-sm font-medium text-foreground">
+                            <span className="shrink-0">Time Zone</span>
+                            <span className="truncate font-mono text-[10px] text-subtle-foreground">{timeZone}</span>
+                        </div>
+                    </div>
+                    <Settings size={13} className="shrink-0 text-subtle-foreground" />
+                </button>
+            )}
 
             <div className="grid grid-cols-3 gap-2 pt-1">
                 <Button variant="softAlt" size="sm" onClick={onRestartService} className="text-[10px] font-bold tracking-wide">
